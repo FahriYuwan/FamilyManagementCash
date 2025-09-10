@@ -56,11 +56,30 @@ export default function AuthDebugPage() {
     }
     
     checkEnvManually()
-    runDiagnostics()
+    
+    // Add a delay to ensure the component is fully mounted
+    const timer = setTimeout(() => {
+      console.log('Starting simple diagnostics...')
+      runSimpleDiagnostics()
+    }, 500)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   const runDiagnostics = async () => {
     console.log('🔍 Starting diagnostics...')
+    
+    // Set a timeout to ensure diagnostics complete
+    const timeoutId = setTimeout(() => {
+      console.warn('⚠️ Diagnostics timeout - forcing completion')
+      setDebugInfo(prev => ({
+        ...prev,
+        environment: prev.environment.status ? { timeout: 'Diagnostics took too long', checkManualSection: 'See manual check above' } : prev.environment,
+        supabaseConfig: prev.supabaseConfig.status ? { timeout: 'Supabase check timeout' } : prev.supabaseConfig,
+        authStatus: prev.authStatus.status ? { timeout: 'Auth check timeout' } : prev.authStatus,
+        networkTest: prev.networkTest.status ? { timeout: 'Network check timeout' } : prev.networkTest
+      }))
+    }, 10000) // 10 second timeout
     
     try {
       // Check environment variables
@@ -154,6 +173,9 @@ export default function AuthDebugPage() {
       
       console.log('🔍 Diagnostics complete:', { environment, supabaseConfig, authStatus, networkTest })
       
+      // Clear timeout since we completed successfully
+      clearTimeout(timeoutId)
+      
       setDebugInfo({
         environment,
         supabaseConfig,
@@ -164,12 +186,34 @@ export default function AuthDebugPage() {
       
     } catch (err) {
       console.error('🚨 Diagnostics failed:', err)
+      
+      // Clear timeout since we're handling the error
+      clearTimeout(timeoutId)
+      
+      // Force set diagnostic results even if there's an error
       setDebugInfo({
-        environment: { error: 'Failed to check environment' },
-        supabaseConfig: { error: 'Failed to check Supabase' },
-        authStatus: { error: 'Failed to check auth' },
-        networkTest: { error: 'Failed to check network' },
-        loginTest: { error: 'Failed to initialize' }
+        environment: { 
+          error: 'Failed to check environment',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error',
+          fallbackCheck: 'Check manual environment section above'
+        },
+        supabaseConfig: { 
+          error: 'Failed to check Supabase',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error',
+          createClientAvailable: !!createClient
+        },
+        authStatus: { 
+          error: 'Failed to check auth',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error'
+        },
+        networkTest: { 
+          error: 'Failed to check network',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error'
+        },
+        loginTest: { 
+          error: 'Failed to initialize',
+          status: 'Use Test Login button below'
+        }
       })
     }
   }
@@ -232,6 +276,81 @@ export default function AuthDebugPage() {
       console.error('Failed to create Supabase client:', err)
       return `FAILED: ${err instanceof Error ? err.message : 'Unknown error'}`
     }
+  }
+
+  const runSimpleDiagnostics = async () => {
+    console.log('🔍 Running simple diagnostics...')
+    
+    // Test 1: Environment Variables
+    try {
+      const envResult = {
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET',
+        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+        siteUrl: process.env.NEXT_PUBLIC_SITE_URL ? 'SET' : 'NOT SET',
+        origin: typeof window !== 'undefined' ? window.location.origin : 'SSR'
+      }
+      
+      setDebugInfo(prev => ({ ...prev, environment: envResult }))
+      console.log('✅ Environment check complete:', envResult)
+    } catch (err) {
+      console.error('❌ Environment check failed:', err)
+      setDebugInfo(prev => ({ ...prev, environment: { error: 'Environment check failed' } }))
+    }
+    
+    // Test 2: Supabase Client Creation
+    try {
+      if (!createClient) {
+        throw new Error('createClient function not available')
+      }
+      
+      const client = createClient()
+      setDebugInfo(prev => ({ ...prev, supabaseConfig: { clientCreated: 'SUCCESS' } }))
+      console.log('✅ Supabase client created successfully')
+      
+      // Test 3: Session Check
+      try {
+        const { data: { session }, error } = await client.auth.getSession()
+        const sessionResult = {
+          clientCreated: 'SUCCESS',
+          sessionCheck: session ? 'Has session' : 'No session',
+          sessionError: error ? error.message : 'No error'
+        }
+        setDebugInfo(prev => ({ ...prev, supabaseConfig: sessionResult }))
+        console.log('✅ Session check complete:', sessionResult)
+      } catch (sessionErr) {
+        console.error('❌ Session check failed:', sessionErr)
+        setDebugInfo(prev => ({ ...prev, supabaseConfig: { 
+          clientCreated: 'SUCCESS',
+          sessionError: sessionErr instanceof Error ? sessionErr.message : 'Session check failed'
+        }}))
+      }
+      
+    } catch (clientErr) {
+      console.error('❌ Supabase client creation failed:', clientErr)
+      setDebugInfo(prev => ({ ...prev, supabaseConfig: {
+        clientCreated: 'FAILED',
+        error: clientErr instanceof Error ? clientErr.message : 'Client creation failed'
+      }}))
+    }
+    
+    // Test 4: Network Check
+    try {
+      const response = await fetch('/api/health')
+      const networkResult = {
+        apiHealth: response.ok ? 'OK' : 'FAILED',
+        status: response.status
+      }
+      setDebugInfo(prev => ({ ...prev, networkTest: networkResult }))
+      console.log('✅ Network check complete:', networkResult)
+    } catch (networkErr) {
+      console.error('❌ Network check failed:', networkErr)
+      setDebugInfo(prev => ({ ...prev, networkTest: {
+        apiHealth: 'FAILED',
+        error: networkErr instanceof Error ? networkErr.message : 'Network check failed'
+      }}))
+    }
+    
+    console.log('🎉 Simple diagnostics complete')
   }
 
   return (
@@ -371,8 +490,11 @@ export default function AuthDebugPage() {
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4">
+              <Button onClick={runSimpleDiagnostics} variant="outline">
+                🔄 Run Simple Diagnostics
+              </Button>
               <Button onClick={runDiagnostics} variant="outline">
-                🔄 Refresh Diagnostics
+                🔧 Run Full Diagnostics
               </Button>
               <Button onClick={copyDebugInfo} variant="outline">
                 📋 Copy Debug Info
