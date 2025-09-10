@@ -413,6 +413,72 @@ export default function AuthDebugPage() {
     console.log('🎉 Simple diagnostics complete')
   }
 
+  const testDirectSupabaseAPI = async () => {
+    console.log('🔍 Testing direct Supabase API...')
+    
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey) {
+      alert('Environment variables not available')
+      return
+    }
+    
+    try {
+      // Test 1: Check Supabase health endpoint
+      console.log('🔍 Testing Supabase health...')
+      const healthController = new AbortController()
+      setTimeout(() => healthController.abort(), 5000)
+      
+      const healthResponse = await fetch(`${supabaseUrl}/rest/v1/`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        signal: healthController.signal
+      })
+      
+      console.log('✅ Supabase health check:', {
+        status: healthResponse.status,
+        ok: healthResponse.ok
+      })
+      
+      // Test 2: Direct auth API test
+      console.log('🔍 Testing direct auth API...')
+      const authController = new AbortController()
+      setTimeout(() => authController.abort(), 5000)
+      
+      const authResponse = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey
+        },
+        body: JSON.stringify({
+          email: 'ayah@demo.com',
+          password: 'password123'
+        }),
+        signal: authController.signal
+      })
+      
+      const authResult = await authResponse.json()
+      console.log('🔍 Direct auth result:', {
+        status: authResponse.status,
+        ok: authResponse.ok,
+        hasAccessToken: !!authResult.access_token,
+        error: authResult.error || 'No error'
+      })
+      
+      alert(`Direct API Test Results:\n\nHealth: ${healthResponse.ok ? 'OK' : 'FAILED'}\nAuth: ${authResponse.ok ? 'OK' : 'FAILED'}\nError: ${authResult.error || 'None'}\n\nCheck console for details.`)
+      
+    } catch (err) {
+      console.error('🚨 Direct API test failed:', err)
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+      alert(`Direct API Test Failed: ${errorMsg}\n\nThis suggests network or Supabase service issues.`)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -559,6 +625,9 @@ export default function AuthDebugPage() {
               </Button>
               <Button onClick={runDiagnostics} variant="outline">
                 🔧 Run Full Diagnostics
+              </Button>
+              <Button onClick={testDirectSupabaseAPI} variant="outline">
+                🎯 Test Direct Supabase API
               </Button>
               <Button onClick={copyDebugInfo} variant="outline">
                 📋 Copy Debug Info
