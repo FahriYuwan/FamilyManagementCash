@@ -1,53 +1,300 @@
-// Application Types
+// Core Types
+export type UserRole = 'ayah' | 'ibu'
+export type TransactionType = 'income' | 'expense'
+export type DebtType = 'receivable' | 'payable'
+export type OrderStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
+
+// User Types
 export interface User {
   id: string
-  name: string
   email: string
-  role: 'ayah' | 'ibu'
+  name: string
+  role: UserRole
+  avatar_url?: string
   created_at: string
+  updated_at: string
+}
+
+export interface UserProfile {
+  id: string
+  email: string
+  name: string
+  role: UserRole
+  avatar_url?: string
+}
+
+// Household Finance Types
+export interface HouseholdCategory {
+  id: string
+  name: string
+  icon?: string
+  color?: string
+  is_default: boolean
+  user_id?: string
+  created_at: string
+  updated_at: string
 }
 
 export interface HouseholdTransaction {
   id: string
   user_id: string
-  type: 'income' | 'expense'
+  category_id?: string
+  category?: HouseholdCategory
+  type: TransactionType
   amount: number
-  category: string
-  note?: string
+  description: string
   date: string
+  notes?: string
   created_at: string
+  updated_at: string
 }
 
+export interface CreateHouseholdTransactionData {
+  category_id?: string
+  type: TransactionType
+  amount: number
+  description: string
+  date: string
+  notes?: string
+}
+
+// Garment Business Types
 export interface Order {
   id: string
+  user_id: string
+  order_number: string
   customer_name: string
+  customer_contact?: string
+  description: string
+  quantity: number
+  unit_price: number
+  total_income: number
+  status: OrderStatus
   order_date: string
-  income: number
-  status: 'paid' | 'unpaid'
+  deadline_date?: string
+  completion_date?: string
+  notes?: string
   created_at: string
+  updated_at: string
   expenses?: OrderExpense[]
+  total_expenses?: number
+  profit?: number
+}
+
+export interface CreateOrderData {
+  order_number: string
+  customer_name: string
+  customer_contact?: string
+  description: string
+  quantity: number
+  unit_price: number
+  status?: OrderStatus
+  order_date: string
+  deadline_date?: string
+  notes?: string
+}
+
+export interface OrderExpenseCategory {
+  id: string
+  name: string
+  description?: string
+  created_at: string
 }
 
 export interface OrderExpense {
   id: string
   order_id: string
-  category: 'bahan' | 'produksi' | 'tenaga_kerja' | 'operasional' | 'lainnya'
+  category_id: string
+  category?: OrderExpenseCategory
   amount: number
-  note?: string
+  description: string
+  date: string
   created_at: string
+  updated_at: string
 }
 
+export interface CreateOrderExpenseData {
+  order_id: string
+  category_id: string
+  amount: number
+  description: string
+  date: string
+}
+
+// Debt Management Types
 export interface Debt {
   id: string
-  order_id?: string
-  debtor_name: string
+  user_id: string
+  type: DebtType
+  debtor_creditor_name: string
   amount: number
-  status: 'lunas' | 'belum'
+  paid_amount: number
+  remaining_amount: number
+  description: string
   due_date?: string
+  is_settled: boolean
+  created_at: string
+  updated_at: string
+  payments?: DebtPayment[]
+}
+
+export interface CreateDebtData {
+  type: DebtType
+  debtor_creditor_name: string
+  amount: number
+  description: string
+  due_date?: string
+}
+
+export interface DebtPayment {
+  id: string
+  debt_id: string
+  amount: number
+  payment_date: string
+  notes?: string
   created_at: string
 }
 
-// UI Types
+export interface CreateDebtPaymentData {
+  debt_id: string
+  amount: number
+  payment_date: string
+  notes?: string
+}
+
+// Dashboard & Analytics Types
+export interface DashboardStats {
+  household: {
+    totalIncome: number
+    totalExpenses: number
+    balance: number
+    monthlyIncome: number
+    monthlyExpenses: number
+    monthlyBalance: number
+  }
+  business?: {
+    totalOrders: number
+    completedOrders: number
+    totalRevenue: number
+    totalExpenses: number
+    totalProfit: number
+    monthlyRevenue: number
+    monthlyProfit: number
+  }
+  debts: {
+    totalReceivables: number
+    totalPayables: number
+    overdueReceivables: number
+    overduePayables: number
+  }
+}
+
+export interface CategorySummary {
+  category: HouseholdCategory
+  total: number
+  percentage: number
+  transactions: number
+}
+
+export interface MonthlyData {
+  month: string
+  income: number
+  expenses: number
+  profit?: number
+}
+
+export interface ChartData {
+  name: string
+  value: number
+  color?: string
+}
+
+// Reporting Types
+export interface ReportFilter {
+  startDate: string
+  endDate: string
+  type?: 'household' | 'business' | 'debts'
+  category?: string
+  status?: OrderStatus
+}
+
+export interface ExportOptions {
+  format: 'pdf' | 'excel'
+  data: 'household' | 'business' | 'debts' | 'summary'
+  filter?: ReportFilter
+}
+
+// API Response Types
+export interface ApiResponse<T> {
+  data?: T
+  error?: string
+  success: boolean
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  count: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+// Form Types
+export interface FormError {
+  field: string
+  message: string
+}
+
+export interface LoadingState {
+  [key: string]: boolean
+}
+
+// Component Props Types
+export interface BaseComponentProps {
+  className?: string
+  children?: React.ReactNode
+}
+
+export interface TableColumn<T> {
+  key: keyof T
+  label: string
+  render?: (value: any, row: T) => React.ReactNode
+  sortable?: boolean
+  width?: string
+}
+
+export interface FilterOption {
+  label: string
+  value: string
+}
+
+// Settings Types
+export interface UserSettings {
+  currency: string
+  dateFormat: string
+  notifications: {
+    email: boolean
+    push: boolean
+    reminders: boolean
+  }
+  privacy: {
+    showBalance: boolean
+    allowDataExport: boolean
+  }
+}
+
+// Auth context type
+export interface AuthContextType {
+  user: User | null
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string, name: string, role: UserRole) => Promise<void>
+  signOut: () => Promise<void>
+  updateProfile: (data: Partial<User>) => Promise<void>
+  refreshUser: () => Promise<void>
+}
+
+// Legacy types for backward compatibility
 export interface MenuItem {
   name: string
   href: string
@@ -55,17 +302,9 @@ export interface MenuItem {
   description?: string
 }
 
-export interface DashboardStats {
-  totalIncome: number
-  totalExpense: number
-  balance: number
-  ordersCount: number
-  pendingDebts: number
-}
-
-// Form Types
+// Form Types (Legacy)
 export interface HouseholdTransactionForm {
-  type: 'income' | 'expense'
+  type: TransactionType
   amount: number | string
   category: string
   note?: string
@@ -76,12 +315,12 @@ export interface OrderForm {
   customer_name: string
   order_date: string
   income: number | string
-  status: 'paid' | 'unpaid'
+  status: OrderStatus
   expenses: OrderExpenseForm[]
 }
 
 export interface OrderExpenseForm {
-  category: 'bahan' | 'produksi' | 'tenaga_kerja' | 'operasional' | 'lainnya'
+  category: string
   amount: number | string
   note?: string
 }
@@ -96,13 +335,13 @@ export interface DebtForm {
 
 // Constants
 export const HOUSEHOLD_CATEGORIES = [
-  'Makan & Minum',
-  'Transport',
-  'Listrik & Air',
-  'Pendidikan',
+  'Makanan & Minuman',
+  'Transportasi',
   'Kesehatan',
-  'Belanja Rumah Tangga',
+  'Pendidikan',
   'Hiburan',
+  'Tagihan',
+  'Pakaian',
   'Lainnya'
 ] as const
 
@@ -121,3 +360,16 @@ export const ORDER_EXPENSE_LABELS = {
   operasional: 'Biaya Operasional',
   lainnya: 'Lainnya'
 } as const
+
+// Status Options
+export const ORDER_STATUS_OPTIONS = [
+  { value: 'pending', label: 'Menunggu' },
+  { value: 'in_progress', label: 'Dikerjakan' },
+  { value: 'completed', label: 'Selesai' },
+  { value: 'cancelled', label: 'Dibatalkan' }
+] as const
+
+export const DEBT_TYPE_OPTIONS = [
+  { value: 'receivable', label: 'Piutang' },
+  { value: 'payable', label: 'Hutang' }
+] as const

@@ -1,11 +1,11 @@
 'use client'
 
 import React from 'react'
-import { cn } from '@/utils'
+import { cn } from '@/lib/utils'
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'destructive'
+  variant?: 'primary' | 'secondary' | 'outline' | 'destructive' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
 }
@@ -16,7 +16,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       primary: 'bg-primary-600 hover:bg-primary-700 text-white',
       secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900',
       outline: 'border border-primary-600 text-primary-600 hover:bg-primary-50',
-      destructive: 'bg-red-600 hover:bg-red-700 text-white'
+      destructive: 'bg-red-600 hover:bg-red-700 text-white',
+      ghost: 'hover:bg-gray-100 text-gray-700'
     }
 
     const sizes = {

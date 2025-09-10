@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
+import { useAuth, useRoleAccess } from '@/lib/auth'
+import { HouseholdService } from '@/lib/household-service'
+import { BusinessService } from '@/lib/business-service'
+import { DebtService } from '@/lib/debt-service'
 import { Button } from '@/components/ui/button'
-import { Wallet, Home, Package, BarChart3, LogOut, User } from 'lucide-react'
+import { Wallet, Home, Package, BarChart3, LogOut, User, TrendingUp, TrendingDown, DollarSign, Settings } from 'lucide-react'
+import Link from 'next/link'
 
 interface User {
   id: string
@@ -16,38 +20,56 @@ interface User {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, loading, signOut } = useAuth()
+  const { canAccessBusiness } = useRoleAccess()
   const router = useRouter()
+  const [dashboardData, setDashboardData] = useState({
+    household: { totalIncome: 0, totalExpenses: 0, balance: 0 },
+    business: { totalOrders: 0, totalRevenue: 0, totalProfit: 0 },
+    debts: { totalReceivables: 0, totalPayables: 0 }
+  })
+  const [dataLoading, setDataLoading] = useState(true)
 
   useEffect(() => {
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
-    try {
-      const supabase = createClient()
-      const { data: { user }, error } = await supabase.auth.getUser()
-      
-      if (error || !user) {
-        router.push('/auth/login')
-        return
-      }
-      
-      setUser(user as User)
-    } catch (error) {
-      console.error('Error checking user:', error)
+    if (!loading && !user) {
       router.push('/auth/login')
+    } else if (user) {
+      loadDashboardData()
+    }
+  }, [user, loading, router])
+
+  const loadDashboardData = async () => {
+    try {
+      const householdService = new HouseholdService()
+      const debtService = new DebtService()
+      
+      const [householdSummary, debtSummary] = await Promise.all([
+        householdService.getSummary(user!.id),
+        debtService.getDebtSummary(user!.id)
+      ])
+
+      let businessSummary = { totalOrders: 0, totalRevenue: 0, totalProfit: 0 }
+      
+      if (canAccessBusiness) {
+        const businessService = new BusinessService()
+        businessSummary = await businessService.getBusinessSummary(user!.id)
+      }
+
+      setDashboardData({
+        household: householdSummary,
+        business: businessSummary,
+        debts: debtSummary
+      })
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
     } finally {
-      setLoading(false)
+      setDataLoading(false)
     }
   }
 
   const handleLogout = async () => {
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signOut()
-      if (error) console.error('Error logging out:', error)
+      await signOut()
       router.push('/')
     } catch (error) {
       console.error('Error during logout:', error)
@@ -69,8 +91,8 @@ export default function DashboardPage() {
     return null
   }
 
-  const userName = user.user_metadata?.name || user.email?.split('@')[0]
-  const userRole = user.user_metadata?.role || 'ibu'
+  const userName = user.name || user.email?.split('@')[0]
+  const userRole = user.role || 'ibu'
   const isAyah = userRole === 'ayah'
 
   return (
@@ -124,11 +146,27 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-green-100">
-                <Wallet className="h-6 w-6 text-green-600" />
+                <TrendingUp className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Saldo</p>
-                <p className="text-2xl font-bold text-gray-900">Rp 0</p>
+                <p className="text-sm font-medium text-gray-600">Monthly Income</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ${dataLoading ? '0' : dashboardData.household.totalIncome.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-red-100">
+                <TrendingDown className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Monthly Expenses</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ${dataLoading ? '0' : dashboardData.household.totalExpenses.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -136,71 +174,76 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-blue-100">
-                <Home className="h-6 w-6 text-blue-600" />
+                <DollarSign className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Rumah Tangga</p>
-                <p className="text-2xl font-bold text-gray-900">Rp 0</p>
+                <p className="text-sm font-medium text-gray-600">Balance</p>
+                <p className={`text-2xl font-bold ${
+                  dashboardData.household.balance >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  ${dataLoading ? '0' : dashboardData.household.balance.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
 
-          {isAyah && (
-            <>
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center">
-                  <div className="p-3 rounded-full bg-purple-100">
-                    <Package className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Usaha</p>
-                    <p className="text-2xl font-bold text-gray-900">Rp 0</p>
-                  </div>
+          {canAccessBusiness && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-purple-100">
+                  <Package className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Business Revenue</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${dataLoading ? '0' : dashboardData.business.totalRevenue.toLocaleString()}
+                  </p>
                 </div>
               </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center">
-                  <div className="p-3 rounded-full bg-orange-100">
-                    <BarChart3 className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Order</p>
-                    <p className="text-2xl font-bold text-gray-900">0</p>
-                  </div>
-                </div>
-              </div>
-            </>
+            </div>
           )}
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button className="h-auto p-4 flex flex-col items-center space-y-2">
-              <Home className="h-6 w-6" />
-              <span className="text-sm">Catat Pengeluaran</span>
-            </Button>
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Link href="/household/transactions">
+              <Button className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
+                <Home className="h-6 w-6" />
+                <span className="text-sm">Household</span>
+              </Button>
+            </Link>
             
-            <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
-              <Wallet className="h-6 w-6" />
-              <span className="text-sm">Catat Pemasukan</span>
-            </Button>
+            <Link href="/debts">
+              <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
+                <Wallet className="h-6 w-6" />
+                <span className="text-sm">Debts</span>
+              </Button>
+            </Link>
 
-            {isAyah && (
-              <>
-                <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
+            <Link href="/reports">
+              <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
+                <BarChart3 className="h-6 w-6" />
+                <span className="text-sm">Reports</span>
+              </Button>
+            </Link>
+
+            {canAccessBusiness && (
+              <Link href="/business/orders">
+                <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
                   <Package className="h-6 w-6" />
-                  <span className="text-sm">Order Baru</span>
+                  <span className="text-sm">Business</span>
                 </Button>
-
-                <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
-                  <BarChart3 className="h-6 w-6" />
-                  <span className="text-sm">Laporan</span>
-                </Button>
-              </>
+              </Link>
             )}
+
+            <Link href="/settings">
+              <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
+                <Settings className="h-6 w-6" />
+                <span className="text-sm">Settings</span>
+              </Button>
+            </Link>
           </div>
         </div>
 

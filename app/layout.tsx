@@ -2,6 +2,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { Metadata, Viewport } from 'next'
 import Script from 'next/script'
+import { AuthProvider } from '@/lib/auth'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -89,9 +90,11 @@ export default function RootLayout({
         <meta name="theme-color" content="#2563eb" />
       </head>
       <body className={inter.className}>
-        <div className="min-h-screen bg-gray-50">
-          {children}
-        </div>
+        <AuthProvider>
+          <div className="min-h-screen bg-gray-50">
+            {children}
+          </div>
+        </AuthProvider>
         
         {/* Service Worker Registration */}
         <Script id="sw-register" strategy="afterInteractive">
