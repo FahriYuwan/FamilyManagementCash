@@ -22,19 +22,40 @@ export default function LoginPage() {
     setError('')
 
     try {
+      console.log('🔍 Login attempt started...')
+      console.log('Environment check:', {
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET',
+        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+        origin: window.location.origin
+      })
+      
       const supabase = createClient()
+      console.log('🔍 Supabase client created')
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
+      
+      console.log('🔍 Login response:', { 
+        hasUser: !!data.user, 
+        hasSession: !!data.session, 
+        error: error?.message 
+      })
 
       if (error) {
-        setError(error.message)
-      } else {
+        console.error('🚨 Login error:', error)
+        setError(`Login failed: ${error.message}`)
+      } else if (data.user) {
+        console.log('✅ Login successful, redirecting...')
         router.push('/dashboard')
+      } else {
+        console.warn('⚠️ No error but no user data')
+        setError('Login succeeded but no user data received')
       }
     } catch (err) {
-      setError('Terjadi kesalahan. Silakan coba lagi.')
+      console.error('🚨 Login exception:', err)
+      setError(`Unexpected error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
     }
@@ -148,9 +169,12 @@ export default function LoginPage() {
         </div>
 
         {/* Back to Home */}
-        <div className="text-center">
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+        <div className="text-center space-y-2">
+          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900 block">
             ← Kembali ke Beranda
+          </Link>
+          <Link href="/auth/debug" className="text-xs text-blue-600 hover:text-blue-800 block">
+            🔍 Debug Authentication
           </Link>
         </div>
       </div>
