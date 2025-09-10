@@ -1,3 +1,21 @@
+## ✅ **RESOLVED: Authentication Routes Added**
+
+**Update:** The 404 errors for `/auth/login` and `/auth/register` have been fixed by adding the missing authentication pages.
+
+**Added Pages:**
+- ✅ `/auth/login` - Login page with Supabase authentication
+- ✅ `/auth/register` - Registration with role selection (Ayah/Ibu)  
+- ✅ `/dashboard` - Protected dashboard with role-based features
+- ✅ `/terms` - Terms and conditions page
+
+**After redeployment, these URLs should work:**
+- `https://family-management-cash.vercel.app/auth/login`
+- `https://family-management-cash.vercel.app/auth/register`
+- `https://family-management-cash.vercel.app/dashboard` (requires login)
+- `https://family-management-cash.vercel.app/terms`
+
+---
+
 # 🚨 Deployment Troubleshooting Guide
 
 ## Common 404 Issues After Deployment
