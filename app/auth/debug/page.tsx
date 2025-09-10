@@ -1,9 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+
+// Dynamic import with error handling
+let createClient: any = null
+try {
+  const supabaseModule = require('@/lib/supabase')
+  createClient = supabaseModule.createClient
+  console.log('🔍 Supabase module imported successfully')
+} catch (err) {
+  console.error('🚨 Failed to import Supabase module:', err)
+}
 
 interface DebugInfo {
   environment: any
@@ -15,87 +24,154 @@ interface DebugInfo {
 
 export default function AuthDebugPage() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({
-    environment: {},
-    supabaseConfig: {},
-    authStatus: {},
-    networkTest: {},
-    loginTest: {}
+    environment: { status: 'Loading...' },
+    supabaseConfig: { status: 'Loading...' },
+    authStatus: { status: 'Loading...' },
+    networkTest: { status: 'Loading...' },
+    loginTest: { status: 'Not tested' }
   })
   const [testEmail, setTestEmail] = useState('ayah@demo.com')
   const [testPassword, setTestPassword] = useState('password123')
   const [loading, setLoading] = useState(false)
+  const [manualEnvCheck, setManualEnvCheck] = useState<any>({})
 
   useEffect(() => {
+    // Manual environment check that runs immediately
+    const checkEnvManually = () => {
+      try {
+        const envCheck = {
+          NODE_ENV: process.env.NODE_ENV,
+          NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET',
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+          NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ? 'SET' : 'NOT SET',
+          windowLocation: typeof window !== 'undefined' ? window.location.href : 'SSR',
+          timestamp: new Date().toISOString()
+        }
+        console.log('Manual env check:', envCheck)
+        setManualEnvCheck(envCheck)
+      } catch (err) {
+        console.error('Manual env check failed:', err)
+        setManualEnvCheck({ error: 'Failed to check environment variables' })
+      }
+    }
+    
+    checkEnvManually()
     runDiagnostics()
   }, [])
 
   const runDiagnostics = async () => {
-    const supabase = createClient()
+    console.log('🔍 Starting diagnostics...')
     
-    // Check environment variables
-    const environment = {
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT SET',
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET (length: ' + process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length + ')' : 'NOT SET',
-      siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'NOT SET',
-      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
-      origin: typeof window !== 'undefined' ? window.location.origin : 'server-side'
-    }
-
-    // Check Supabase configuration
-    let supabaseConfig = {}
     try {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      supabaseConfig = {
-        sessionCheck: session ? 'Session exists' : 'No session',
-        sessionError: error ? error.message : 'No error',
-        clientInitialized: 'YES'
+      // Check environment variables
+      const environment = {
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT SET',
+        supabaseUrlLength: process.env.NEXT_PUBLIC_SUPABASE_URL?.length || 0,
+        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? `SET (length: ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length})` : 'NOT SET',
+        siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'NOT SET',
+        hostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
+        origin: typeof window !== 'undefined' ? window.location.origin : 'server-side',
+        userAgent: typeof window !== 'undefined' ? navigator.userAgent.substring(0, 50) + '...' : 'server-side'
       }
+      
+      console.log('Environment check:', environment)
+      
+      // Check Supabase configuration with error handling
+      let supabaseConfig = {}
+      try {
+        if (!createClient) {
+          throw new Error('Supabase createClient function not available')
+        }
+        
+        console.log('🔍 Initializing Supabase client...')
+        const supabase = createClient()
+        console.log('🔍 Supabase client created, getting session...')
+        
+        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('🔍 Session result:', { hasSession: !!session, error: error?.message })
+        
+        supabaseConfig = {
+          clientInitialized: 'YES',
+          sessionCheck: session ? 'Session exists' : 'No session',
+          sessionError: error ? error.message : 'No error',
+          sessionUserId: session?.user?.id || 'No user ID'
+        }
+      } catch (err) {
+        console.error('🚨 Supabase client error:', err)
+        supabaseConfig = {
+          clientInitialized: 'NO',
+          error: err instanceof Error ? err.message : 'Unknown error',
+          errorType: err instanceof Error ? err.constructor.name : 'Unknown',
+          createClientAvailable: !!createClient
+        }
+      }
+      
+      // Check auth status with detailed error handling
+      let authStatus = {}
+      try {
+        console.log('🔍 Getting user info...')
+        const supabase = createClient()
+        const { data: { user }, error } = await supabase.auth.getUser()
+        console.log('🔍 User result:', { hasUser: !!user, error: error?.message })
+        
+        authStatus = {
+          userExists: user ? 'YES' : 'NO',
+          userId: user?.id || 'N/A',
+          userEmail: user?.email || 'N/A',
+          emailConfirmed: user?.email_confirmed_at ? 'YES' : 'NO',
+          error: error ? error.message : 'No error'
+        }
+      } catch (err) {
+        console.error('🚨 Auth status error:', err)
+        authStatus = {
+          error: err instanceof Error ? err.message : 'Unknown error',
+          errorType: err instanceof Error ? err.constructor.name : 'Unknown'
+        }
+      }
+      
+      // Test network connectivity
+      let networkTest = {}
+      try {
+        console.log('🔍 Testing API health...')
+        const response = await fetch('/api/health')
+        const responseText = await response.text()
+        console.log('🔍 API health response:', { status: response.status, ok: response.ok })
+        
+        networkTest = {
+          apiHealth: response.ok ? 'OK' : 'FAILED',
+          status: response.status,
+          statusText: response.statusText,
+          responseText: responseText.substring(0, 100)
+        }
+      } catch (err) {
+        console.error('🚨 Network test error:', err)
+        networkTest = {
+          apiHealth: 'FAILED',
+          error: err instanceof Error ? err.message : 'Unknown error',
+          errorType: err instanceof Error ? err.constructor.name : 'Unknown'
+        }
+      }
+      
+      console.log('🔍 Diagnostics complete:', { environment, supabaseConfig, authStatus, networkTest })
+      
+      setDebugInfo({
+        environment,
+        supabaseConfig,
+        authStatus,
+        networkTest,
+        loginTest: {}
+      })
+      
     } catch (err) {
-      supabaseConfig = {
-        clientInitialized: 'NO',
-        error: err instanceof Error ? err.message : 'Unknown error'
-      }
+      console.error('🚨 Diagnostics failed:', err)
+      setDebugInfo({
+        environment: { error: 'Failed to check environment' },
+        supabaseConfig: { error: 'Failed to check Supabase' },
+        authStatus: { error: 'Failed to check auth' },
+        networkTest: { error: 'Failed to check network' },
+        loginTest: { error: 'Failed to initialize' }
+      })
     }
-
-    // Check auth status
-    let authStatus = {}
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      authStatus = {
-        userExists: user ? 'YES' : 'NO',
-        userId: user?.id || 'N/A',
-        userEmail: user?.email || 'N/A',
-        error: error ? error.message : 'No error'
-      }
-    } catch (err) {
-      authStatus = {
-        error: err instanceof Error ? err.message : 'Unknown error'
-      }
-    }
-
-    // Test network connectivity
-    let networkTest = {}
-    try {
-      const response = await fetch('/api/health')
-      networkTest = {
-        apiHealth: response.ok ? 'OK' : 'FAILED',
-        status: response.status,
-        statusText: response.statusText
-      }
-    } catch (err) {
-      networkTest = {
-        apiHealth: 'FAILED',
-        error: err instanceof Error ? err.message : 'Unknown error'
-      }
-    }
-
-    setDebugInfo({
-      environment,
-      supabaseConfig,
-      authStatus,
-      networkTest,
-      loginTest: {}
-    })
   }
 
   const testLogin = async () => {
@@ -137,6 +213,27 @@ export default function AuthDebugPage() {
     alert('Debug info copied to clipboard!')
   }
 
+  const testBasicFunctionality = () => {
+    console.log('Testing basic functionality...')
+    console.log('Window object:', typeof window)
+    console.log('Process.env keys:', Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_')))
+    console.log('Current URL:', typeof window !== 'undefined' ? window.location.href : 'SSR')
+    console.log('createClient available:', !!createClient)
+    
+    if (!createClient) {
+      return 'FAILED: createClient function not available'
+    }
+    
+    try {
+      const testSupabase = createClient()
+      console.log('Supabase client created successfully')
+      return 'SUCCESS'
+    } catch (err) {
+      console.error('Failed to create Supabase client:', err)
+      return `FAILED: ${err instanceof Error ? err.message : 'Unknown error'}`
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -146,6 +243,21 @@ export default function AuthDebugPage() {
           </h1>
           
           <div className="space-y-6">
+            {/* Manual Environment Check */}
+            <div className="border rounded-lg p-4 bg-blue-50">
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">Manual Environment Check</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {Object.entries(manualEnvCheck).map(([key, value]) => (
+                  <div key={key} className="flex justify-between">
+                    <span className="font-medium">{key}:</span>
+                    <span className={value === 'NOT SET' ? 'text-red-600' : 'text-green-600'}>
+                      {String(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Environment Variables */}
             <div className="border rounded-lg p-4">
               <h2 className="text-lg font-semibold text-gray-800 mb-3">Environment Variables</h2>
@@ -264,6 +376,9 @@ export default function AuthDebugPage() {
               </Button>
               <Button onClick={copyDebugInfo} variant="outline">
                 📋 Copy Debug Info
+              </Button>
+              <Button onClick={() => console.log('Basic test:', testBasicFunctionality())} variant="outline">
+                🧪 Test Basic Functions
               </Button>
             </div>
           </div>
