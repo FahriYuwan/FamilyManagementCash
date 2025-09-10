@@ -29,11 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('id', userId as any) // Type assertion to handle Supabase type issues
         .single()
 
       if (error) throw error
-      return data
+      return data ? (data as unknown as User) : null
     } catch (error) {
       console.error('Error fetching user profile:', error)
       return null

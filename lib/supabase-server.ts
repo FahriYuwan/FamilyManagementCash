@@ -4,10 +4,18 @@ import { Database } from '@/types/supabase'
 
 export function createClient() {
   const cookieStore = cookies()
+  
+  // Validate environment variables
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables')
+  }
 
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         get(name: string) {
@@ -20,6 +28,7 @@ export function createClient() {
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
+            console.warn('Cookie set failed:', error)
           }
         },
         remove(name: string, options: any) {
@@ -29,9 +38,10 @@ export function createClient() {
             // The `delete` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
+            console.warn('Cookie remove failed:', error)
           }
         },
-      },
+      }
     }
   )
 }
