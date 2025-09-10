@@ -24,7 +24,9 @@ export const config = {
      * - manifest.json (PWA manifest)
      * - sw.js (service worker)
      * - icon files
+     * - sitemap.xml (sitemap)
+     * - robots.txt (robots file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icon-).*)$',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icon-|sitemap.xml|robots.txt).*)$',
   ],
 }
