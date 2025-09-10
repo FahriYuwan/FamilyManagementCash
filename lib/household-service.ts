@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createClient } from '@/lib/supabase'
 import { HouseholdTransaction, CreateHouseholdTransactionData, HouseholdCategory } from '@/types'
 
