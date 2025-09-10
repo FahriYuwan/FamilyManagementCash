@@ -220,30 +220,68 @@ export default function AuthDebugPage() {
 
   const testLogin = async () => {
     setLoading(true)
-    const supabase = createClient()
+    console.log('🔍 Starting login test with:', { email: testEmail })
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      if (!createClient) {
+        throw new Error('Supabase client not available')
+      }
+      
+      const supabase = createClient()
+      console.log('🔍 Supabase client created for login test')
+      
+      // Add timeout to login request
+      const loginPromise = supabase.auth.signInWithPassword({
         email: testEmail,
         password: testPassword
       })
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Login timeout (10s)')), 10000)
+      )
+      
+      console.log('🔍 Attempting login...')
+      const { data, error } = await Promise.race([loginPromise, timeoutPromise])
+      
+      console.log('🔍 Login response received:', { 
+        hasUser: !!data.user, 
+        hasSession: !!data.session, 
+        errorMessage: error?.message 
+      })
 
       const loginTest = {
-        success: !error,
+        success: !error && !!data.user,
         error: error ? error.message : 'No error',
         userData: data.user ? {
           id: data.user.id,
           email: data.user.email,
-          emailConfirmed: data.user.email_confirmed_at ? 'YES' : 'NO'
+          emailConfirmed: data.user.email_confirmed_at ? 'YES' : 'NO',
+          lastSignIn: data.user.last_sign_in_at || 'Never'
         } : 'No user data',
-        sessionData: data.session ? 'Session created' : 'No session'
+        sessionData: data.session ? {
+          accessToken: 'Present',
+          refreshToken: 'Present',
+          expiresIn: data.session.expires_in
+        } : 'No session',
+        timestamp: new Date().toISOString()
       }
 
       setDebugInfo(prev => ({ ...prev, loginTest }))
+      
+      if (loginTest.success) {
+        console.log('✅ Login test successful!')
+        alert('Login test successful! You can now try the actual login page.')
+      } else {
+        console.error('❌ Login test failed:', loginTest.error)
+      }
+      
     } catch (err) {
+      console.error('🚨 Login test exception:', err)
       const loginTest = {
         success: false,
-        error: err instanceof Error ? err.message : 'Unknown error'
+        error: err instanceof Error ? err.message : 'Unknown error',
+        errorType: err instanceof Error ? err.constructor.name : 'Unknown',
+        timestamp: new Date().toISOString()
       }
       setDebugInfo(prev => ({ ...prev, loginTest }))
     }
@@ -307,13 +345,20 @@ export default function AuthDebugPage() {
       setDebugInfo(prev => ({ ...prev, supabaseConfig: { clientCreated: 'SUCCESS' } }))
       console.log('✅ Supabase client created successfully')
       
-      // Test 3: Session Check
+      // Test 3: Session Check with shorter timeout
       try {
-        const { data: { session }, error } = await client.auth.getSession()
+        console.log('🔍 Starting session check...')
+        const sessionPromise = client.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timeout (3s)')), 3000)
+        )
+        
+        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise])
         const sessionResult = {
           clientCreated: 'SUCCESS',
           sessionCheck: session ? 'Has session' : 'No session',
-          sessionError: error ? error.message : 'No error'
+          sessionError: error ? error.message : 'No error',
+          sessionUser: session?.user?.email || 'No user'
         }
         setDebugInfo(prev => ({ ...prev, supabaseConfig: sessionResult }))
         console.log('✅ Session check complete:', sessionResult)
@@ -321,7 +366,8 @@ export default function AuthDebugPage() {
         console.error('❌ Session check failed:', sessionErr)
         setDebugInfo(prev => ({ ...prev, supabaseConfig: { 
           clientCreated: 'SUCCESS',
-          sessionError: sessionErr instanceof Error ? sessionErr.message : 'Session check failed'
+          sessionError: sessionErr instanceof Error ? sessionErr.message : 'Session check failed',
+          note: 'Try manual login test below'
         }}))
       }
       
@@ -333,20 +379,34 @@ export default function AuthDebugPage() {
       }}))
     }
     
-    // Test 4: Network Check
+    // Test 4: Network Check with shorter timeout
     try {
-      const response = await fetch('/api/health')
+      console.log('🔍 Starting network check...')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+      
+      const response = await fetch('/api/health', { 
+        signal: controller.signal,
+        cache: 'no-cache'
+      })
+      clearTimeout(timeoutId)
+      
       const networkResult = {
         apiHealth: response.ok ? 'OK' : 'FAILED',
-        status: response.status
+        status: response.status,
+        statusText: response.statusText
       }
       setDebugInfo(prev => ({ ...prev, networkTest: networkResult }))
       console.log('✅ Network check complete:', networkResult)
     } catch (networkErr) {
       console.error('❌ Network check failed:', networkErr)
+      const errorMessage = networkErr instanceof Error ? networkErr.message : 'Network check failed'
+      const isTimeout = networkErr instanceof Error && networkErr.name === 'AbortError'
+      
       setDebugInfo(prev => ({ ...prev, networkTest: {
         apiHealth: 'FAILED',
-        error: networkErr instanceof Error ? networkErr.message : 'Network check failed'
+        error: errorMessage,
+        note: isTimeout ? 'Request timeout (3s)' : 'Network error'
       }}))
     }
     
@@ -407,18 +467,22 @@ export default function AuthDebugPage() {
               </div>
             </div>
 
-            {/* Auth Status */}
+            {/* Authentication Status */}
             <div className="border rounded-lg p-4">
               <h2 className="text-lg font-semibold text-gray-800 mb-3">Authentication Status</h2>
               <div className="space-y-2 text-sm">
-                {Object.entries(debugInfo.authStatus).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="font-medium">{key}:</span>
-                    <span className={key === 'error' && value !== 'No error' ? 'text-red-600' : 'text-gray-700'}>
-                      {String(value)}
-                    </span>
-                  </div>
-                ))}
+                {debugInfo.authStatus && Object.keys(debugInfo.authStatus).length > 0 ? (
+                  Object.entries(debugInfo.authStatus).map(([key, value]) => (
+                    <div key={key} className="flex justify-between">
+                      <span className="font-medium">{key}:</span>
+                      <span className={key === 'error' && value !== 'No error' ? 'text-red-600' : 'text-gray-700'}>
+                        {String(value)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-500 italic">No authentication data available. Try running Simple Diagnostics or Test Login.</div>
+                )}
               </div>
             </div>
 
