@@ -118,6 +118,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // Only initialize auth in browser environment
+        if (typeof window === 'undefined') {
+          setLoading(false)
+          return
+        }
+        
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
           const profile = await getUserProfile(session.user.id)
@@ -132,19 +138,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user && event === 'SIGNED_IN') {
-          const profile = await getUserProfile(session.user.id)
-          if (profile) setUser(profile)
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null)
+    // Only set up auth state listener in browser
+    if (typeof window !== 'undefined') {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (session?.user && event === 'SIGNED_IN') {
+            const profile = await getUserProfile(session.user.id)
+            if (profile) setUser(profile)
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null)
+          }
+          setLoading(false)
         }
-        setLoading(false)
-      }
-    )
+      )
 
-    return () => subscription.unsubscribe()
+      return () => subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {

@@ -5,6 +5,9 @@ import { Database } from '@/types/supabase'
 // Cache the client to avoid recreating it
 let supabaseClient: ReturnType<typeof createBrowserClient<Database>> | null = null
 
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined'
+
 export function createClient() {
   // Return cached client if available
   if (supabaseClient) {
@@ -19,7 +22,8 @@ export function createClient() {
     hasUrl: !!supabaseUrl,
     hasKey: !!supabaseKey,
     urlLength: supabaseUrl?.length || 0,
-    keyLength: supabaseKey?.length || 0
+    keyLength: supabaseKey?.length || 0,
+    isBrowser
   })
   
   if (!supabaseUrl || !supabaseKey) {
@@ -34,9 +38,11 @@ export function createClient() {
       supabaseKey,
       {
         auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true
+          persistSession: isBrowser,
+          autoRefreshToken: isBrowser,
+          detectSessionInUrl: isBrowser,
+          storage: isBrowser ? window.localStorage : undefined,
+          storageKey: 'supabase.auth.token'
         },
         global: {
           headers: {
