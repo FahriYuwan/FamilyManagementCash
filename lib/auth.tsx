@@ -29,11 +29,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔍 getUserProfile called with userId:', userId)
       
-      // First, check if users table exists and is accessible
-      const { data: testData, error: testError } = await supabase
+      // Quick table access test with timeout
+      const testPromise = supabase
         .from('users')
         .select('count', { count: 'exact' })
         .limit(0)
+      
+      const testTimeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Table access timeout')), 3000)
+      )
+      
+      const { error: testError } = await Promise.race([testPromise, testTimeoutPromise])
       
       if (testError) {
         console.error('❌ Users table access test failed:', testError)
@@ -42,11 +48,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('✅ Users table accessible, attempting to fetch profile...')
       
-      const { data, error } = await supabase
+      // Fetch profile with timeout
+      const profilePromise = supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
+      
+      const profileTimeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+      )
+
+      const { data, error } = await Promise.race([profilePromise, profileTimeoutPromise])
 
       if (error) {
         console.error('❌ Profile fetch error:', error)
@@ -134,22 +147,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    if (data.user) {
-      const profile = await getUserProfile(data.user.id)
-      if (profile) setUser(profile)
+    console.log('🔍 Starting signIn with timeout protection...')
+    
+    // Add timeout protection for login
+    const loginPromise = supabase.auth.signInWithPassword({ email, password })
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Login timeout after 8 seconds')), 8000)
+    )
+    
+    try {
+      const { data, error } = await Promise.race([loginPromise, timeoutPromise])
+      
+      if (error) throw error
+      
+      if (data.user) {
+        console.log('✅ Auth successful, fetching profile...')
+        // Add timeout for profile fetch too
+        const profilePromise = getUserProfile(data.user.id)
+        const profileTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+        )
+        
+        try {
+          const profile = await Promise.race([profilePromise, profileTimeoutPromise])
+          if (profile) {
+            setUser(profile)
+            console.log('✅ Login completed successfully')
+          } else {
+            console.log('⚠️ Profile not found, but auth successful')
+            // Create a minimal user object from auth data
+            setUser({
+              id: data.user.id,
+              email: data.user.email!,
+              name: data.user.user_metadata?.name || data.user.email!.split('@')[0],
+              role: data.user.user_metadata?.role || 'ibu',
+              avatar_url: null,
+              created_at: data.user.created_at,
+              updated_at: new Date().toISOString()
+            })
+          }
+        } catch (profileError) {
+          console.warn('Profile fetch failed, using auth data:', profileError)
+          // Fallback to auth user data
+          setUser({
+            id: data.user.id,
+            email: data.user.email!,
+            name: data.user.user_metadata?.name || data.user.email!.split('@')[0],
+            role: data.user.user_metadata?.role || 'ibu',
+            avatar_url: null,
+            created_at: data.user.created_at,
+            updated_at: new Date().toISOString()
+          })
+        }
+      }
+    } catch (error) {
+      console.error('❌ Login failed:', error)
+      throw error
     }
   }
 
   const signUp = async (email: string, password: string, name: string, role: UserRole) => {
-    const { data, error } = await supabase.auth.signUp({
+    console.log('🔍 Starting signUp with timeout protection...')
+    
+    // Add timeout protection for registration
+    const signUpPromise = supabase.auth.signUp({
       email,
       password,
       options: { data: { name, role } }
     })
-    if (error) throw error
-    return data
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Registration timeout after 10 seconds')), 10000)
+    )
+    
+    try {
+      const { data, error } = await Promise.race([signUpPromise, timeoutPromise])
+      
+      if (error) throw error
+      
+      console.log('✅ Registration successful:', data)
+      return data
+    } catch (error) {
+      console.error('❌ Registration failed:', error)
+      throw error
+    }
   }
 
   const signOut = async () => {

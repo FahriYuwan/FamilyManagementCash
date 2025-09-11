@@ -1,7 +1,15 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { Database } from '@/types/supabase'
 
+// Cache the client to avoid recreating it
+let supabaseClient: ReturnType<typeof createBrowserClient<Database>> | null = null
+
 export function createClient() {
+  // Return cached client if available
+  if (supabaseClient) {
+    return supabaseClient
+  }
+  
   // Validate environment variables
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -20,12 +28,24 @@ export function createClient() {
   }
   
   try {
-    const client = createBrowserClient<Database>(
+    supabaseClient = createBrowserClient<Database>(
       supabaseUrl,
-      supabaseKey
+      supabaseKey,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        },
+        global: {
+          headers: {
+            'Cache-Control': 'max-age=300' // 5 minutes cache
+          }
+        }
+      }
     )
     console.log('Supabase client created successfully')
-    return client
+    return supabaseClient
   } catch (err) {
     console.error('Failed to create Supabase browser client:', err)
     throw err
