@@ -26,16 +26,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getUserProfile = async (userId: string): Promise<User | null> => {
     try {
+      console.log('🔍 getUserProfile called with userId:', userId)
+      
+      // First, check if users table exists and is accessible
+      const { data: testData, error: testError } = await supabase
+        .from('users')
+        .select('count', { count: 'exact' })
+        .limit(0)
+      
+      if (testError) {
+        console.error('❌ Users table access test failed:', testError)
+        throw new Error(`Database table access error: ${testError.message}`)
+      }
+      
+      console.log('✅ Users table accessible, attempting to fetch profile...')
+      
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId as any) // Type assertion to handle Supabase type issues
+        .eq('id', userId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Profile fetch error:', error)
+        if (error.code === 'PGRST116') {
+          console.log('📝 User not found in users table, attempting to create from auth data...')
+          return await createUserProfileFromAuth(userId)
+        }
+        throw new Error(`Database error querying schema: ${error.message} (Code: ${error.code})`)
+      }
+      
+      console.log('✅ Profile found:', data)
       return data ? (data as unknown as User) : null
     } catch (error) {
-      console.error('Error fetching user profile:', error)
+      console.error('❌ Error in getUserProfile:', error)
+      return null
+    }
+  }
+
+  const createUserProfileFromAuth = async (userId: string): Promise<User | null> => {
+    try {
+      console.log('🔨 Creating user profile from auth data for:', userId)
+      
+      // Get user data from auth.users
+      const { data: authUser, error: authError } = await supabase.auth.getUser()
+      if (authError || !authUser.user) {
+        console.error('❌ Could not get auth user data:', authError)
+        return null
+      }
+      
+      // Insert into users table
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: authUser.user.email!,
+          name: authUser.user.user_metadata?.name || authUser.user.email!.split('@')[0],
+          role: authUser.user.user_metadata?.role || 'ibu'
+        })
+        .select()
+        .single()
+      
+      if (insertError) {
+        console.error('❌ Failed to create user profile:', insertError)
+        return null
+      }
+      
+      console.log('✅ User profile created successfully:', newUser)
+      return newUser as unknown as User
+    } catch (error) {
+      console.error('❌ Error creating user profile:', error)
       return null
     }
   }
