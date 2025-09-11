@@ -264,20 +264,20 @@ export default function SettingsPage() {
               {/* Add New Category Form */}
               {showAddForm && (
                 <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                  <h4 className="font-medium mb-3">Add New Category</h4>
+                  <h4 className="font-medium mb-3">Tambah Kategori Baru</h4>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
                       <input
                         type="text"
                         value={newCategory.name}
                         onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="Category name"
+                        placeholder="Nama kategori"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ikon</label>
                       <input
                         type="text"
                         value={newCategory.icon}
@@ -497,7 +497,7 @@ export default function SettingsPage() {
                         })}
                         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
-                      <span className="text-sm">Email notifications</span>
+                      <span className="text-sm">Notifikasi email</span>
                     </label>
                     <label className="flex items-center space-x-3">
                       <input
@@ -509,13 +509,13 @@ export default function SettingsPage() {
                         })}
                         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
-                      <span className="text-sm">Push notifications</span>
+                      <span className="text-sm">Notifikasi push</span>
                     </label>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-medium">Report Notifications</h4>
+                  <h4 className="font-medium">Notifikasi Laporan</h4>
                   <div className="space-y-3">
                     <label className="flex items-center space-x-3">
                       <input
@@ -539,7 +539,7 @@ export default function SettingsPage() {
                         })}
                         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
-                      <span className="text-sm">Monthly financial reports</span>
+                      <span className="text-sm">Laporan keuangan bulanan</span>
                     </label>
                   </div>
                 </div>
@@ -555,11 +555,11 @@ export default function SettingsPage() {
                 <Shield className="h-5 w-5 mr-2" />
                 Privacy & Security
               </CardTitle>
-              <CardDescription>Control your data and privacy settings</CardDescription>
+              <CardDescription>Kontrol data dan pengaturan privasi Anda</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h4 className="font-medium mb-3">Profile Visibility</h4>
+                <h4 className="font-medium mb-3">Visibilitas Profil</h4>
                 <div className="space-y-2">
                   <label className="flex items-center space-x-3">
                     <input
@@ -573,8 +573,8 @@ export default function SettingsPage() {
                       className="text-primary-600 focus:ring-primary-500"
                     />
                     <div>
-                      <span className="text-sm font-medium">Private</span>
-                      <p className="text-xs text-gray-500">Only you can see your financial data</p>
+                      <span className="text-sm font-medium">Pribadi</span>
+                      <p className="text-xs text-gray-500">Hanya Anda yang dapat melihat data keuangan Anda</p>
                     </div>
                   </label>
                   <label className="flex items-center space-x-3">
@@ -589,15 +589,15 @@ export default function SettingsPage() {
                       className="text-primary-600 focus:ring-primary-500"
                     />
                     <div>
-                      <span className="text-sm font-medium">Family</span>
-                      <p className="text-xs text-gray-500">Family members can see your data</p>
+                      <span className="text-sm font-medium">Keluarga</span>
+                      <p className="text-xs text-gray-500">Anggota keluarga dapat melihat data Anda</p>
                     </div>
                   </label>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Data Preferences</h4>
+                <h4 className="font-medium">Preferensi Data</h4>
                 <div className="space-y-3">
                   <label className="flex items-center space-x-3">
                     <input
@@ -610,8 +610,8 @@ export default function SettingsPage() {
                       className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div>
-                      <span className="text-sm">Allow data sharing for app improvements</span>
-                      <p className="text-xs text-gray-500">Anonymous data to help improve the app</p>
+                      <span className="text-sm">Izinkan berbagi data untuk perbaikan aplikasi</span>
+                      <p className="text-xs text-gray-500">Data anonim untuk membantu meningkatkan aplikasi</p>
                     </div>
                   </label>
                   <label className="flex items-center space-x-3">

@@ -109,35 +109,35 @@ export default function HouseholdTransactionsPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Household Transactions</h1>
-              <p className="text-gray-600">Manage daily family income and expenses</p>
+              <h1 className="text-2xl font-bold text-gray-900">Transaksi Rumah Tangga</h1>
+              <p className="text-gray-600">Kelola pemasukan dan pengeluaran keluarga harian</p>
             </div>
           </div>
           <Button onClick={() => setShowForm(!showForm)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Transaction
+            Tambah Transaksi
           </Button>
         </div>
 
         {/* Add Transaction Form */}
         {showForm && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Add New Transaction</h2>
+            <h2 className="text-lg font-semibold mb-4">Tambah Transaksi Baru</h2>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as TransactionType })}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
+                  <option value="expense">Pengeluaran</option>
+                  <option value="income">Pemasukan</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
                 <Input
                   type="number"
                   step="0.01"
@@ -149,7 +149,7 @@ export default function HouseholdTransactionsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                 <select
                   value={formData.category_id}
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
@@ -165,7 +165,7 @@ export default function HouseholdTransactionsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
                 <Input
                   type="date"
                   value={formData.date}
@@ -175,19 +175,19 @@ export default function HouseholdTransactionsPage() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Transaction description"
+                  placeholder="Keterangan transaksi"
                   required
                 />
               </div>
 
               <div className="flex space-x-2 md:col-span-2 lg:col-span-3">
-                <Button type="submit">Save Transaction</Button>
+                <Button type="submit">Simpan Transaksi</Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                  Cancel
+                  Batal
                 </Button>
               </div>
             </form>
@@ -197,7 +197,7 @@ export default function HouseholdTransactionsPage() {
         {/* Transactions Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent Transactions</h3>
+            <h3 className="text-lg font-medium text-gray-900">Transaksi Terbaru</h3>
           </div>
           
           <div className="overflow-x-auto">
@@ -205,19 +205,19 @@ export default function HouseholdTransactionsPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
+                    Tanggal
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
+                    Keterangan
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
+                    Kategori
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
+                    Jenis
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
+                    Jumlah
                   </th>
                 </tr>
               </thead>
@@ -225,14 +225,14 @@ export default function HouseholdTransactionsPage() {
                 {transactions.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                      No transactions found. Add your first transaction above.
+                      Belum ada transaksi. Tambah transaksi pertama Anda di atas.
                     </td>
                   </tr>
                 ) : (
                   transactions.map((transaction: any) => (
                     <tr key={transaction.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(transaction.date).toLocaleDateString('en-US')}
+                        {new Date(transaction.date).toLocaleDateString('id-ID')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {transaction.description}
@@ -251,13 +251,13 @@ export default function HouseholdTransactionsPage() {
                           ) : (
                             <TrendingDown className="h-3 w-3 mr-1" />
                           )}
-                          {transaction.type === 'income' ? 'Income' : 'Expense'}
+                          {transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                         </div>
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
                         transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        ${transaction.amount.toLocaleString()}
+                        Rp{transaction.amount.toLocaleString('id-ID')}
                       </td>
                     </tr>
                   ))

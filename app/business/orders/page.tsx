@@ -170,17 +170,17 @@ export default function BusinessOrdersPage() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Order description (e.g., T-shirt printing)"
+                  placeholder="Deskripsi pesanan (contoh: Sablon kaos)"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
                 <Input
                   type="number"
                   value={formData.quantity}
@@ -191,7 +191,7 @@ export default function BusinessOrdersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Harga Satuan</label>
                 <Input
                   type="number"
                   step="0.01"
@@ -217,7 +217,7 @@ export default function BusinessOrdersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Order Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Pesanan</label>
                 <Input
                   type="date"
                   value={formData.order_date}
@@ -227,7 +227,7 @@ export default function BusinessOrdersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Batas Waktu</label>
                 <Input
                   type="date"
                   value={formData.deadline_date}
@@ -236,11 +236,11 @@ export default function BusinessOrdersPage() {
               </div>
 
               <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
                 <Input
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Additional notes"
+                  placeholder="Catatan tambahan"
                 />
               </div>
 
@@ -265,25 +265,25 @@ export default function BusinessOrdersPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Order #
+                    No Pesanan
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer
+                    Pelanggan
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
+                    Deskripsi
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantity
+                    Jumlah
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Revenue
+                    Total Pendapatan
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                    Aksi
                   </th>
                 </tr>
               </thead>
@@ -291,7 +291,7 @@ export default function BusinessOrdersPage() {
                 {orders.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                      No orders found. Add your first order above.
+                      Belum ada pesanan. Tambahkan pesanan pertama Anda di atas.
                     </td>
                   </tr>
                 ) : (
@@ -310,7 +310,7 @@ export default function BusinessOrdersPage() {
                         {order.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                        ${order.total_income.toLocaleString()}
+                        Rp{order.total_income.toLocaleString('id-ID')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -325,7 +325,7 @@ export default function BusinessOrdersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4 mr-1" />
-                          View
+                          Lihat
                         </Button>
                       </td>
                     </tr>

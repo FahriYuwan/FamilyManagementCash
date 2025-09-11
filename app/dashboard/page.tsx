@@ -241,7 +241,7 @@ export default function DashboardPage() {
             <Link href="/settings">
               <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
                 <Settings className="h-6 w-6" />
-                <span className="text-sm">Settings</span>
+                <span className="text-sm">Pengaturan</span>
               </Button>
             </Link>
           </div>

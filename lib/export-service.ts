@@ -43,14 +43,14 @@ export class ExportService {
 
       autoTable(doc, {
         startY: currentY,
-        head: [['Month', 'Income', 'Expenses', 'Balance', 'Business Revenue', 'Business Profit']],
+        head: [['Bulan', 'Pemasukan', 'Pengeluaran', 'Saldo', 'Pendapatan Usaha', 'Keuntungan Usaha']],
         body: data.monthly.map(month => [
           month.month,
-          `$${month.income.toLocaleString()}`,
-          `$${month.expenses.toLocaleString()}`,
-          `$${month.balance.toLocaleString()}`,
-          `$${(month.business_revenue || 0).toLocaleString()}`,
-          `$${(month.business_profit || 0).toLocaleString()}`
+          `Rp${month.income.toLocaleString('id-ID')}`,
+          `Rp${month.expenses.toLocaleString('id-ID')}`,
+          `Rp${month.balance.toLocaleString('id-ID')}`,
+          `Rp${(month.business_revenue || 0).toLocaleString('id-ID')}`,
+          `Rp${(month.business_profit || 0).toLocaleString('id-ID')}`
         ]),
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 3 },
@@ -76,15 +76,15 @@ export class ExportService {
 
       doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
-      doc.text('Top Expense Categories', marginLeft, currentY)
+      doc.text('Kategori Pengeluaran Teratas', marginLeft, currentY)
       currentY += 10
 
       autoTable(doc, {
         startY: currentY,
-        head: [['Category', 'Amount', 'Percentage', 'Transactions']],
+        head: [['Kategori', 'Jumlah', 'Persentase', 'Transaksi']],
         body: data.categories.expense.slice(0, 10).map(cat => [
           cat.category,
-          `$${cat.amount.toLocaleString()}`,
+          `Rp${cat.amount.toLocaleString('id-ID')}`,
           `${cat.percentage.toFixed(1)}%`,
           cat.count.toString()
         ]),
@@ -110,15 +110,15 @@ export class ExportService {
 
       doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
-      doc.text('Income Sources', marginLeft, currentY)
+      doc.text('Sumber Pemasukan', marginLeft, currentY)
       currentY += 10
 
       autoTable(doc, {
         startY: currentY,
-        head: [['Category', 'Amount', 'Percentage', 'Transactions']],
+        head: [['Kategori', 'Jumlah', 'Persentase', 'Transaksi']],
         body: data.categories.income.map(cat => [
           cat.category,
-          `$${cat.amount.toLocaleString()}`,
+          `Rp${cat.amount.toLocaleString('id-ID')}`,
           `${cat.percentage.toFixed(1)}%`,
           cat.count.toString()
         ]),
@@ -144,17 +144,17 @@ export class ExportService {
 
       doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
-      doc.text('Debt Position Trend', marginLeft, currentY)
+      doc.text('Tren Posisi Hutang', marginLeft, currentY)
       currentY += 10
 
       autoTable(doc, {
         startY: currentY,
-        head: [['Month', 'Receivables', 'Payables', 'Net Position']],
+        head: [['Bulan', 'Piutang', 'Hutang', 'Posisi Bersih']],
         body: data.debts.map(debt => [
           debt.month,
-          `$${debt.receivables.toLocaleString()}`,
-          `$${debt.payables.toLocaleString()}`,
-          `$${debt.net_position.toLocaleString()}`
+          `Rp${debt.receivables.toLocaleString('id-ID')}`,
+          `Rp${debt.payables.toLocaleString('id-ID')}`,
+          `Rp${debt.net_position.toLocaleString('id-ID')}`
         ]),
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 3 },

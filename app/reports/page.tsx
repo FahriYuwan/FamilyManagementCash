@@ -104,8 +104,8 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Financial Reports</h1>
-          <p className="text-gray-600 mt-2">Comprehensive financial analysis and insights</p>
+          <h1 className="text-3xl font-bold text-gray-900">Laporan Keuangan</h1>
+          <p className="text-gray-600 mt-2">Analisis dan wawasan keuangan yang komprehensif</p>
         </div>
         <div className="flex items-center space-x-4">
           <select
@@ -113,9 +113,9 @@ export default function ReportsPage() {
             onChange={(e) => setTimeRange(e.target.value as '3' | '6' | '12')}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <option value="3">Last 3 months</option>
-            <option value="6">Last 6 months</option>
-            <option value="12">Last 12 months</option>
+            <option value="3">3 bulan terakhir</option>
+            <option value="6">6 bulan terakhir</option>
+            <option value="12">12 bulan terakhir</option>
           </select>
           <div className="flex space-x-2">
             <Button
@@ -150,47 +150,47 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Pemasukan</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${monthlyData.reduce((sum, month) => sum + month.income, 0).toLocaleString()}
+              Rp{monthlyData.reduce((sum, month) => sum + month.income, 0).toLocaleString('id-ID')}
             </div>
             <p className="text-xs text-gray-600 mt-1">
-              Last {timeRange} months
+              {timeRange} bulan terakhir
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Pengeluaran</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              ${monthlyData.reduce((sum, month) => sum + month.expenses, 0).toLocaleString()}
+              Rp{monthlyData.reduce((sum, month) => sum + month.expenses, 0).toLocaleString('id-ID')}
             </div>
             <p className="text-xs text-gray-600 mt-1">
-              Last {timeRange} months
+              {timeRange} bulan terakhir
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">Saldo Bersih</CardTitle>
             <BarChart3 className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${
               monthlyData.reduce((sum, month) => sum + month.balance, 0) >= 0 ? 'text-green-600' : 'text-red-600'
             }`}>
-              ${monthlyData.reduce((sum, month) => sum + month.balance, 0).toLocaleString()}
+              Rp{monthlyData.reduce((sum, month) => sum + month.balance, 0).toLocaleString('id-ID')}
             </div>
             <p className="text-xs text-gray-600 mt-1">
-              Last {timeRange} months
+              {timeRange} bulan terakhir
             </p>
           </CardContent>
         </Card>
@@ -198,15 +198,15 @@ export default function ReportsPage() {
         {canAccessBusiness && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Business Profit</CardTitle>
+              <CardTitle className="text-sm font-medium">Keuntungan Usaha</CardTitle>
               <TrendingUp className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
-                ${businessReport.reduce((sum, month) => sum + month.profit, 0).toLocaleString()}
+                Rp{businessReport.reduce((sum, month) => sum + month.profit, 0).toLocaleString('id-ID')}
               </div>
               <p className="text-xs text-gray-600 mt-1">
-                Last {timeRange} months
+                {timeRange} bulan terakhir
               </p>
             </CardContent>
           </Card>
@@ -216,17 +216,17 @@ export default function ReportsPage() {
       {/* Charts */}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="debts">Debts</TabsTrigger>
-          {canAccessBusiness && <TabsTrigger value="business">Business</TabsTrigger>}
+          <TabsTrigger value="overview">Ringkasan</TabsTrigger>
+          <TabsTrigger value="categories">Kategori</TabsTrigger>
+          <TabsTrigger value="debts">Hutang</TabsTrigger>
+          {canAccessBusiness && <TabsTrigger value="business">Usaha</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Income vs Expenses</CardTitle>
-              <CardDescription>Track your financial performance over time</CardDescription>
+              <CardTitle>Pemasukan vs Pengeluaran Bulanan</CardTitle>
+              <CardDescription>Lacak kinerja keuangan Anda dari waktu ke waktu</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>
@@ -234,7 +234,7 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
+                  <Tooltip formatter={(value) => [`Rp${Number(value).toLocaleString('id-ID')}`, '']} />
                   <Legend />
                   <Area type="monotone" dataKey="income" stackId="1" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
                   <Area type="monotone" dataKey="expenses" stackId="2" stroke="#EF4444" fill="#EF4444" fillOpacity={0.6} />
@@ -245,8 +245,8 @@ export default function ReportsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Balance Trend</CardTitle>
-              <CardDescription>Your net financial position each month</CardDescription>
+              <CardTitle>Tren Saldo Bulanan</CardTitle>
+              <CardDescription>Posisi keuangan bersih Anda setiap bulan</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -254,7 +254,7 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Balance']} />
+                  <Tooltip formatter={(value) => [`Rp${Number(value).toLocaleString('id-ID')}`, 'Saldo']} />
                   <Line 
                     type="monotone" 
                     dataKey="balance" 
@@ -272,8 +272,8 @@ export default function ReportsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Income by Category</CardTitle>
-                <CardDescription>Breakdown of income sources</CardDescription>
+                <CardTitle>Pemasukan berdasarkan Kategori</CardTitle>
+                <CardDescription>Rincian sumber pemasukan</CardDescription>
               </CardHeader>
               <CardContent>
                 {categoryData.income.length > 0 ? (
@@ -293,19 +293,19 @@ export default function ReportsPage() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
+                      <Tooltip formatter={(value) => [`Rp${Number(value).toLocaleString('id-ID')}`, 'Jumlah']} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">No income data available</div>
+                  <div className="text-center py-8 text-gray-500">Data pemasukan tidak tersedia</div>
                 )}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Expenses by Category</CardTitle>
-                <CardDescription>Where your money goes</CardDescription>
+                <CardTitle>Pengeluaran berdasarkan Kategori</CardTitle>
+                <CardDescription>Kemana uang Anda pergi</CardDescription>
               </CardHeader>
               <CardContent>
                 {categoryData.expense.length > 0 ? (
@@ -325,11 +325,11 @@ export default function ReportsPage() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
+                      <Tooltip formatter={(value) => [`Rp${Number(value).toLocaleString('id-ID')}`, 'Jumlah']} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">No expense data available</div>
+                  <div className="text-center py-8 text-gray-500">Data pengeluaran tidak tersedia</div>
                 )}
               </CardContent>
             </Card>
@@ -337,8 +337,8 @@ export default function ReportsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Top Expense Categories</CardTitle>
-              <CardDescription>Your highest spending categories</CardDescription>
+              <CardTitle>Kategori Pengeluaran Tertinggi</CardTitle>
+              <CardDescription>Kategori pengeluaran terbesar Anda</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -357,8 +357,8 @@ export default function ReportsPage() {
         <TabsContent value="debts" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Debt Position Trend</CardTitle>
-              <CardDescription>Track receivables and payables over time</CardDescription>
+              <CardTitle>Tren Posisi Hutang</CardTitle>
+              <CardDescription>Lacak piutang dan hutang dari waktu ke waktu</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>
@@ -366,7 +366,7 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
+                  <Tooltip formatter={(value) => [`Rp${Number(value).toLocaleString('id-ID')}`, '']} />
                   <Legend />
                   <Line type="monotone" dataKey="receivables" stroke="#10B981" strokeWidth={2} />
                   <Line type="monotone" dataKey="payables" stroke="#EF4444" strokeWidth={2} />
@@ -382,8 +382,8 @@ export default function ReportsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Business Revenue & Profit</CardTitle>
-                  <CardDescription>Monthly business performance</CardDescription>
+                  <CardTitle>Pendapatan & Keuntungan Usaha</CardTitle>
+                  <CardDescription>Kinerja usaha bulanan</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -391,7 +391,7 @@ export default function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
+                      <Tooltip formatter={(value) => [`Rp${Number(value).toLocaleString('id-ID')}`, '']} />
                       <Legend />
                       <Area type="monotone" dataKey="total_revenue" stackId="1" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
                       <Area type="monotone" dataKey="profit" stackId="2" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
@@ -402,8 +402,8 @@ export default function ReportsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Orders Performance</CardTitle>
-                  <CardDescription>Number of orders and average value</CardDescription>
+                  <CardTitle>Kinerja Pesanan</CardTitle>
+                  <CardDescription>Jumlah pesanan dan nilai rata-rata</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -412,8 +412,8 @@ export default function ReportsPage() {
                       <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip formatter={(value, name) => [
-                        name === 'orders_count' ? value : `$${Number(value).toLocaleString()}`,
-                        name === 'orders_count' ? 'Orders' : 'Avg Order Value'
+                        name === 'orders_count' ? value : `Rp${Number(value).toLocaleString('id-ID')}`,
+                        name === 'orders_count' ? 'Pesanan' : 'Nilai Pesanan Rata-rata'
                       ]} />
                       <Legend />
                       <Bar dataKey="orders_count" fill="#ffc658" />
