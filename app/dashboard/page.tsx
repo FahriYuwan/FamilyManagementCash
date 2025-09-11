@@ -206,26 +206,26 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Menu Utama</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Link href="/household/transactions">
               <Button className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
                 <Home className="h-6 w-6" />
-                <span className="text-sm">Household</span>
+                <span className="text-sm">Keuangan Rumah</span>
               </Button>
             </Link>
             
             <Link href="/debts">
               <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
                 <Wallet className="h-6 w-6" />
-                <span className="text-sm">Debts</span>
+                <span className="text-sm">Hutang Piutang</span>
               </Button>
             </Link>
 
             <Link href="/reports">
               <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
                 <BarChart3 className="h-6 w-6" />
-                <span className="text-sm">Reports</span>
+                <span className="text-sm">Laporan</span>
               </Button>
             </Link>
 
@@ -233,7 +233,7 @@ export default function DashboardPage() {
               <Link href="/business/orders">
                 <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2 w-full">
                   <Package className="h-6 w-6" />
-                  <span className="text-sm">Business</span>
+                  <span className="text-sm">Usaha Konveksi</span>
                 </Button>
               </Link>
             )}

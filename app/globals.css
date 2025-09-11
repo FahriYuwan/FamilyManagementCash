@@ -60,4 +60,14 @@ a {
   input[type="checkbox"] {
     @apply h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded bg-white;
   }
+  
+  /* Enhanced select/dropdown styling */
+  select {
+    @apply w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:border-gray-400 transition-colors text-gray-900;
+  }
+  
+  /* Dropdown option styling for better readability */
+  select option {
+    @apply bg-white text-gray-900 py-2;
+  }
 }

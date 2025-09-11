@@ -105,8 +105,8 @@ export default function DebtsPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Debt & Receivables</h1>
-              <p className="text-gray-600">Track money you owe and money owed to you</p>
+              <h1 className="text-2xl font-bold text-gray-900">Hutang & Piutang</h1>
+              <p className="text-gray-600">Kelola catatan hutang dan piutang keluarga</p>
             </div>
           </div>
           <Button onClick={() => setShowForm(!showForm)}>

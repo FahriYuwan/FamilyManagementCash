@@ -125,47 +125,47 @@ export default function BusinessOrdersPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Garment Business Orders</h1>
-              <p className="text-gray-600">Manage customer orders and track profitability</p>
+              <h1 className="text-2xl font-bold text-gray-900">Pesanan Usaha Konveksi</h1>
+              <p className="text-gray-600">Kelola pesanan pelanggan dan pantau keuntungan</p>
             </div>
           </div>
           <Button onClick={() => setShowForm(!showForm)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Order
+            Tambah Pesanan
           </Button>
         </div>
 
         {/* Add Order Form */}
         {showForm && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Add New Order</h2>
+            <h2 className="text-lg font-semibold mb-4">Tambah Pesanan Baru</h2>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Order Number</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Pesanan</label>
                 <Input
                   value={formData.order_number}
                   onChange={(e) => setFormData({ ...formData, order_number: e.target.value })}
-                  placeholder="ORD-001"
+                  placeholder="PSN-001"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pelanggan</label>
                 <Input
                   value={formData.customer_name}
                   onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                  placeholder="Customer name"
+                  placeholder="Nama pelanggan"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kontak</label>
                 <Input
                   value={formData.customer_contact}
                   onChange={(e) => setFormData({ ...formData, customer_contact: e.target.value })}
-                  placeholder="Phone or email"
+                  placeholder="No HP atau email"
                 />
               </div>
 
@@ -209,10 +209,10 @@ export default function BusinessOrdersPage() {
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as OrderStatus })}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="pending">Pending</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="pending">Menunggu</option>
+                  <option value="in_progress">Sedang Dikerjakan</option>
+                  <option value="completed">Selesai</option>
+                  <option value="cancelled">Dibatalkan</option>
                 </select>
               </div>
 
@@ -245,9 +245,9 @@ export default function BusinessOrdersPage() {
               </div>
 
               <div className="flex space-x-2 md:col-span-2 lg:col-span-3">
-                <Button type="submit">Save Order</Button>
+                <Button type="submit">Simpan Pesanan</Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                  Cancel
+                  Batal
                 </Button>
               </div>
             </form>
@@ -257,7 +257,7 @@ export default function BusinessOrdersPage() {
         {/* Orders Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent Orders</h3>
+            <h3 className="text-lg font-medium text-gray-900">Pesanan Terbaru</h3>
           </div>
           
           <div className="overflow-x-auto">

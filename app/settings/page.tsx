@@ -43,22 +43,22 @@ interface UserPreferences {
 }
 
 const DEFAULT_CATEGORIES = [
-  { name: 'Food & Dining', icon: '🍽️', color: '#EF4444' },
-  { name: 'Transportation', icon: '🚗', color: '#3B82F6' },
-  { name: 'Shopping', icon: '🛒', color: '#8B5CF6' },
-  { name: 'Entertainment', icon: '🎬', color: '#F59E0B' },
-  { name: 'Bills & Utilities', icon: '💡', color: '#10B981' },
-  { name: 'Healthcare', icon: '🏥', color: '#EF4444' },
-  { name: 'Education', icon: '📚', color: '#6366F1' },
-  { name: 'Gifts & Donations', icon: '🎁', color: '#EC4899' },
-  { name: 'Travel', icon: '✈️', color: '#06B6D4' },
-  { name: 'Home Maintenance', icon: '🏠', color: '#84CC16' },
-  { name: 'Insurance', icon: '🛡️', color: '#64748B' },
-  { name: 'Savings', icon: '💰', color: '#10B981' },
-  { name: 'Investment', icon: '📈', color: '#8B5CF6' },
-  { name: 'Salary', icon: '💼', color: '#059669' },
-  { name: 'Freelance', icon: '💻', color: '#7C3AED' },
-  { name: 'Business', icon: '🏢', color: '#DC2626' }
+  { name: 'Makanan & Makan', icon: '🍽️', color: '#EF4444' },
+  { name: 'Transportasi', icon: '🚗', color: '#3B82F6' },
+  { name: 'Belanja Kebutuhan', icon: '🛒', color: '#8B5CF6' },
+  { name: 'Hiburan', icon: '🎬', color: '#F59E0B' },
+  { name: 'Tagihan & Listrik', icon: '💡', color: '#10B981' },
+  { name: 'Kesehatan', icon: '🏥', color: '#EF4444' },
+  { name: 'Pendidikan', icon: '📚', color: '#6366F1' },
+  { name: 'Hadiah & Sumbangan', icon: '🎁', color: '#EC4899' },
+  { name: 'Perjalanan', icon: '✈️', color: '#06B6D4' },
+  { name: 'Perawatan Rumah', icon: '🏠', color: '#84CC16' },
+  { name: 'Asuransi', icon: '🛡️', color: '#64748B' },
+  { name: 'Tabungan', icon: '💰', color: '#10B981' },
+  { name: 'Investasi', icon: '📈', color: '#8B5CF6' },
+  { name: 'Gaji', icon: '💼', color: '#059669' },
+  { name: 'Kerja Sampingan', icon: '💻', color: '#7C3AED' },
+  { name: 'Usaha', icon: '🏢', color: '#DC2626' }
 ]
 
 const CURRENCIES = [
@@ -409,19 +409,19 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tema Tampilan</label>
                   <select
                     value={preferences.theme}
                     onChange={(e) => setPreferences({ ...preferences, theme: e.target.value as any })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="system">System</option>
+                    <option value="light">Terang</option>
+                    <option value="dark">Gelap</option>
+                    <option value="system">Ikuti Sistem</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Bahasa</label>
                   <select
                     value={preferences.language}
                     onChange={(e) => setPreferences({ ...preferences, language: e.target.value as any })}
