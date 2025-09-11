@@ -59,6 +59,9 @@ export default function RegisterPage() {
 
     try {
       const supabase = createClient()
+      if (!supabase) {
+        throw new Error('Failed to initialize Supabase client')
+      }
       
       // Sign up user
       const { data, error: signUpError } = await supabase.auth.signUp({

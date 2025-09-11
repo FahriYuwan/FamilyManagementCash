@@ -30,6 +30,9 @@ export default function LoginPage() {
       })
       
       const supabase = createClient()
+      if (!supabase) {
+        throw new Error('Failed to initialize Supabase client')
+      }
       console.log('🔍 Supabase client created')
       
       const { data, error } = await supabase.auth.signInWithPassword({

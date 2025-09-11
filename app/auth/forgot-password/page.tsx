@@ -20,6 +20,10 @@ export default function ForgotPasswordPage() {
 
     try {
       const supabase = createClient()
+      if (!supabase) {
+        throw new Error('Failed to initialize Supabase client')
+      }
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       })
@@ -30,6 +34,7 @@ export default function ForgotPasswordPage() {
         setSuccess(true)
       }
     } catch (err) {
+      console.error('Reset password error:', err)
       setError('Terjadi kesalahan. Silakan coba lagi.')
     } finally {
       setLoading(false)
