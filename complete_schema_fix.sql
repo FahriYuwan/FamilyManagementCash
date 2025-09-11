@@ -258,19 +258,53 @@ CREATE OR REPLACE FUNCTION update_updated_at_column() RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
 $$ language 'plpgsql';
 
+-- Drop existing trigger to avoid conflicts
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+-- Create improved user profile creation function
 CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, name, role) VALUES (
-    NEW.id, NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
-    COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'ibu')
-  );
+  -- Log the attempt
+  RAISE LOG 'Creating user profile for: %', NEW.email;
+  
+  -- Insert new user with proper error handling
+  INSERT INTO public.users (id, email, name, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(
+      NEW.raw_user_meta_data->>'name',
+      NEW.raw_user_meta_data->>'full_name', 
+      split_part(NEW.email, '@', 1)
+    ),
+    COALESCE(
+      (NEW.raw_user_meta_data->>'role')::user_role,
+      CASE 
+        WHEN NEW.email LIKE '%ayah%' THEN 'ayah'::user_role
+        ELSE 'ibu'::user_role
+      END
+    )
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    name = EXCLUDED.name,
+    role = EXCLUDED.role,
+    updated_at = NOW();
+  
+  RAISE LOG 'User profile created successfully for: %', NEW.email;
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE LOG 'Error creating user profile for %: %', NEW.email, SQLERRM;
+    -- Don't fail the auth user creation, just log the error
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+-- Recreate the trigger
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- Final verification
 SELECT 'Schema creation completed successfully!' as status;
