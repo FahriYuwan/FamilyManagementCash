@@ -63,11 +63,48 @@ a {
   
   /* Enhanced select/dropdown styling */
   select {
-    @apply w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:border-gray-400 transition-colors text-gray-900;
+    @apply w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm hover:border-gray-400 transition-colors text-gray-900 text-base;
   }
   
   /* Dropdown option styling for better readability */
   select option {
     @apply bg-white text-gray-900 py-2;
+  }
+  
+  /* Mobile-first responsive adjustments */
+  @media (max-width: 640px) {
+    .input-field, select {
+      @apply text-base py-3;
+    }
+    
+    /* Prevent zoom on iOS when focusing inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      font-size: 16px;
+    }
+    
+    /* Better touch targets */
+    button {
+      @apply min-h-[44px];
+    }
+  }
+  
+  /* Table responsive scrolling improvements */
+  .table-container {
+    @apply overflow-x-auto -mx-4 sm:mx-0;
+  }
+  
+  .table-container table {
+    @apply min-w-full;
+  }
+  
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:-translate-y-1;
   }
 }

@@ -147,14 +147,14 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pemasukan</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">
               Rp{monthlyData.reduce((sum, month) => sum + month.income, 0).toLocaleString('id-ID')}
             </div>
             <p className="text-xs text-gray-600 mt-1">
@@ -169,7 +169,7 @@ export default function ReportsPage() {
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-xl sm:text-2xl font-bold text-red-600">
               Rp{monthlyData.reduce((sum, month) => sum + month.expenses, 0).toLocaleString('id-ID')}
             </div>
             <p className="text-xs text-gray-600 mt-1">
@@ -184,7 +184,7 @@ export default function ReportsPage() {
             <BarChart3 className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${
+            <div className={`text-xl sm:text-2xl font-bold ${
               monthlyData.reduce((sum, month) => sum + month.balance, 0) >= 0 ? 'text-green-600' : 'text-red-600'
             }`}>
               Rp{monthlyData.reduce((sum, month) => sum + month.balance, 0).toLocaleString('id-ID')}
@@ -202,7 +202,7 @@ export default function ReportsPage() {
               <TrendingUp className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-xl sm:text-2xl font-bold text-purple-600">
                 Rp{businessReport.reduce((sum, month) => sum + month.profit, 0).toLocaleString('id-ID')}
               </div>
               <p className="text-xs text-gray-600 mt-1">
