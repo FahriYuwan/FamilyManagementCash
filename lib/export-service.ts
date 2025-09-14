@@ -187,10 +187,10 @@ export class ExportService {
         body: data.business.map(biz => [
           biz.month,
           biz.orders_count.toString(),
-          `$${biz.total_revenue.toLocaleString()}`,
-          `$${biz.total_expenses.toLocaleString()}`,
-          `$${biz.profit.toLocaleString()}`,
-          `$${biz.average_order_value.toLocaleString()}`
+          `Rp${biz.total_revenue.toLocaleString('id-ID')}`,
+          `Rp${biz.total_expenses.toLocaleString('id-ID')}`,
+          `Rp${biz.profit.toLocaleString('id-ID')}`,
+          `Rp${biz.average_order_value.toLocaleString('id-ID')}`
         ]),
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 3 },
@@ -226,11 +226,11 @@ export class ExportService {
     if (data.monthly && data.monthly.length > 0) {
       const monthlyData = data.monthly.map(month => ({
         Month: month.month,
-        Income: month.income,
-        Expenses: month.expenses,
-        Balance: month.balance,
-        'Business Revenue': month.business_revenue || 0,
-        'Business Profit': month.business_profit || 0
+        Income: `Rp${month.income.toLocaleString('id-ID')}`,
+        Expenses: `Rp${month.expenses.toLocaleString('id-ID')}`,
+        Balance: `Rp${month.balance.toLocaleString('id-ID')}`,
+        'Business Revenue': `Rp${(month.business_revenue || 0).toLocaleString('id-ID')}`,
+        'Business Profit': `Rp${(month.business_profit || 0).toLocaleString('id-ID')}`
       }))
 
       const monthlySheet = XLSX.utils.json_to_sheet(monthlyData)
@@ -241,7 +241,7 @@ export class ExportService {
     if (data.categories?.income && data.categories.income.length > 0) {
       const incomeData = data.categories.income.map(cat => ({
         Category: cat.category,
-        Amount: cat.amount,
+        Amount: `Rp${cat.amount.toLocaleString('id-ID')}`,
         'Percentage (%)': parseFloat(cat.percentage.toFixed(2)),
         'Transaction Count': cat.count
       }))
@@ -254,7 +254,7 @@ export class ExportService {
     if (data.categories?.expense && data.categories.expense.length > 0) {
       const expenseData = data.categories.expense.map(cat => ({
         Category: cat.category,
-        Amount: cat.amount,
+        Amount: `Rp${cat.amount.toLocaleString('id-ID')}`,
         'Percentage (%)': parseFloat(cat.percentage.toFixed(2)),
         'Transaction Count': cat.count
       }))
@@ -267,9 +267,9 @@ export class ExportService {
     if (data.debts && data.debts.length > 0) {
       const debtData = data.debts.map(debt => ({
         Month: debt.month,
-        Receivables: debt.receivables,
-        Payables: debt.payables,
-        'Net Position': debt.net_position
+        Receivables: `Rp${debt.receivables.toLocaleString('id-ID')}`,
+        Payables: `Rp${debt.payables.toLocaleString('id-ID')}`,
+        'Net Position': `Rp${debt.net_position.toLocaleString('id-ID')}`
       }))
 
       const debtSheet = XLSX.utils.json_to_sheet(debtData)
@@ -281,10 +281,10 @@ export class ExportService {
       const businessData = data.business.map(biz => ({
         Month: biz.month,
         'Orders Count': biz.orders_count,
-        'Total Revenue': biz.total_revenue,
-        'Total Expenses': biz.total_expenses,
-        Profit: biz.profit,
-        'Average Order Value': biz.average_order_value
+        'Total Revenue': `Rp${biz.total_revenue.toLocaleString('id-ID')}`,
+        'Total Expenses': `Rp${biz.total_expenses.toLocaleString('id-ID')}`,
+        Profit: `Rp${biz.profit.toLocaleString('id-ID')}`,
+        'Average Order Value': `Rp${biz.average_order_value.toLocaleString('id-ID')}`
       }))
 
       const businessSheet = XLSX.utils.json_to_sheet(businessData)

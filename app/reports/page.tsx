@@ -346,7 +346,7 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="category" angle={-45} textAnchor="end" height={80} />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
+                  <Tooltip formatter={(value) => [`Rp${Number(value).toLocaleString('id-ID')}`, 'Amount']} />
                   <Bar dataKey="amount" fill="#EF4444" />
                 </BarChart>
               </ResponsiveContainer>

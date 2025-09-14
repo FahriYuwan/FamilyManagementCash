@@ -151,7 +151,7 @@ export default function DashboardPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Monthly Income</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${dataLoading ? '0' : dashboardData.household.totalIncome.toLocaleString()}
+                  Rp{dataLoading ? '0' : dashboardData.household.totalIncome.toLocaleString('id-ID')}
                 </p>
               </div>
             </div>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Monthly Expenses</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${dataLoading ? '0' : dashboardData.household.totalExpenses.toLocaleString()}
+                  Rp{dataLoading ? '0' : dashboardData.household.totalExpenses.toLocaleString('id-ID')}
                 </p>
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                 <p className={`text-2xl font-bold ${
                   dashboardData.household.balance >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  ${dataLoading ? '0' : dashboardData.household.balance.toLocaleString()}
+                  Rp{dataLoading ? '0' : dashboardData.household.balance.toLocaleString('id-ID')}
                 </p>
               </div>
             </div>
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Business Revenue</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    ${dataLoading ? '0' : dashboardData.business.totalRevenue.toLocaleString()}
+                    Rp{dataLoading ? '0' : dashboardData.business.totalRevenue.toLocaleString('id-ID')}
                   </p>
                 </div>
               </div>
