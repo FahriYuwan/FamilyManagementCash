@@ -125,12 +125,19 @@ export default function SettingsPage() {
       
       // Subscribe to family member changes if user is in a family
       if (user.family_id) {
+        // Clear any existing subscription
+        if (familySubscriptionRef.current) {
+          familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
+        }
+        
         familySubscriptionRef.current = familyServiceRef.current.subscribeToFamilyMembers(
           user.family_id,
           (payload: any) => {
             console.log('Family member change detected:', payload)
-            // Refresh user data when family members change
-            refreshUser()
+            // Add a small delay to ensure database is updated
+            setTimeout(() => {
+              refreshUser()
+            }, 1000)
           }
         )
       }

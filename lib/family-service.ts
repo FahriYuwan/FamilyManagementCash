@@ -292,7 +292,7 @@ export class FamilyService {
   // Subscribe to real-time updates for family members
   subscribeToFamilyMembers(familyId: string, callback: (payload: any) => void) {
     try {
-      return this.supabase
+      const channel = this.supabase
         .channel('family-members-changes')
         .on(
           'postgres_changes',
@@ -304,7 +304,14 @@ export class FamilyService {
           },
           callback
         )
-        .subscribe()
+        .subscribe((status: any) => {
+          console.log('Family members subscription status:', status)
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to family members changes')
+          }
+        })
+      
+      return channel
     } catch (error) {
       console.error('Exception in subscribeToFamilyMembers:', error)
       return null

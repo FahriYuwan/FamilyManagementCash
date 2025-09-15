@@ -66,12 +66,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('✅ Users table accessible, attempting to fetch profile...')
       
-      // Fetch profile with family information
+      // Fetch profile with family information including all family members
       const profilePromise = supabase
         .from('users')
         .select(`
           *,
-          family:families(*)
+          family:families(
+            *,
+            members:users(*)
+          )
         `)
         .eq('id', userId)
         .single()
@@ -324,8 +327,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     if (!user) return
+    console.log('Refreshing user data...')
     const profile = await getUserProfile(user.id)
-    if (profile) setUser(profile)
+    if (profile) {
+      console.log('User profile refreshed:', profile)
+      setUser(profile)
+    }
   }
 
   const createFamily = async (name: string): Promise<Family | null> => {
