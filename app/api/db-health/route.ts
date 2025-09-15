@@ -5,6 +5,19 @@ export async function GET() {
   try {
     const supabase = createClient()
     
+    // Handle case where supabase client could not be created
+    if (!supabase) {
+      return NextResponse.json(
+        {
+          status: 'unhealthy',
+          message: 'Failed to create Supabase client',
+          error: 'Supabase client is null',
+          timestamp: new Date().toISOString()
+        },
+        { status: 500 }
+      )
+    }
+    
     // Test database connection
     const { data, error } = await supabase
       .from('users')
