@@ -61,11 +61,15 @@ export class FamilyService {
 
       // Create the family
       console.log('Attempting to create family with name:', name);
+      console.log('Supabase client:', this.supabase);
+      const insertData = { name };
+      console.log('Insert data:', insertData);
       const { data: family, error: familyError } = await this.supabase
         .from('families')
-        .insert([{ name }])
+        .insert(insertData)
         .select()
         .single()
+      console.log('Family insert result:', { data: family, error: familyError });
 
       if (familyError) {
         console.error('Error creating family:', familyError)

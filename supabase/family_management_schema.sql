@@ -490,6 +490,10 @@ WITH CHECK (
   auth.uid() IS NOT NULL
 );
 
+CREATE POLICY "Allow all insert for testing" 
+ON public.families FOR INSERT 
+WITH CHECK (true);
+
 -- Household categories policies
 CREATE POLICY "Users can view household categories" 
 ON public.household_categories FOR SELECT 
