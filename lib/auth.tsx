@@ -31,9 +31,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
   const familyService = new FamilyService()
 
+  // Check if Supabase client is properly initialized
+  if (!supabase) {
+    console.error('Supabase client failed to initialize')
+    // In production, we might want to show an error message to the user
+  }
+
   const getUserProfile = async (userId: string): Promise<User | null> => {
     try {
       console.log('🔍 getUserProfile called with userId:', userId)
+      
+      // Check if Supabase client is available
+      if (!supabase) {
+        console.error('Supabase client not available in getUserProfile')
+        return null
+      }
       
       // Quick table access test with timeout
       const testPromise = supabase
@@ -91,6 +103,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔨 Creating user profile from auth data for:', userId)
       
+      // Check if Supabase client is available
+      if (!supabase) {
+        console.error('Supabase client not available in createUserProfileFromAuth')
+        return null
+      }
+      
       // Get user data from auth.users
       const { data: authUser, error: authError } = await supabase.auth.getUser()
       if (authError || !authUser.user) {
@@ -101,12 +119,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Insert into users table
       const { data: newUser, error: insertError } = await supabase
         .from('users')
-        .insert({
+        .insert([{
           id: userId,
           email: authUser.user.email!,
           name: authUser.user.user_metadata?.name || authUser.user.email!.split('@')[0],
           role: authUser.user.user_metadata?.role || 'ibu'
-        })
+        }])
         .select(`
           *,
           family:families(*)
@@ -135,6 +153,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
         
+        // Check if Supabase client is available
+        if (!supabase) {
+          console.error('Supabase client not available, skipping auth initialization')
+          setLoading(false)
+          return
+        }
+        
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
           const profile = await getUserProfile(session.user.id)
@@ -149,8 +174,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth()
 
-    // Only set up auth state listener in browser
-    if (typeof window !== 'undefined') {
+    // Only set up auth state listener in browser and if Supabase is available
+    if (typeof window !== 'undefined' && supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
           if (session?.user && event === 'SIGNED_IN') {
@@ -163,12 +188,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       )
 
-      return () => subscription.unsubscribe()
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe()
+        }
+      }
     }
   }, [])
 
   const signIn = async (email: string, password: string) => {
     console.log('🔍 Starting signIn with timeout protection...')
+    
+    // Check if Supabase client is available
+    if (!supabase) {
+      throw new Error('Authentication service not available')
+    }
     
     // Add timeout protection for login
     const loginPromise = supabase.auth.signInWithPassword({ email, password })
@@ -230,6 +264,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, name: string, role: UserRole) => {
     console.log('🔍 Starting signUp with timeout protection...')
     
+    // Check if Supabase client is available
+    if (!supabase) {
+      throw new Error('Registration service not available')
+    }
+    
     // Add timeout protection for registration
     const signUpPromise = supabase.auth.signUp({
       email,
@@ -254,6 +293,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    // Check if Supabase client is available
+    if (!supabase) {
+      throw new Error('Sign out service not available')
+    }
+    
     const { error } = await supabase.auth.signOut()
     if (error) throw error
     setUser(null)
@@ -262,6 +306,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = async (updates: Database['public']['Tables']['users']['Update']) => {
     if (!user) throw new Error('No user logged in')
+    // Check if Supabase client is available
+    if (!supabase) {
+      throw new Error('Profile update service not available')
+    }
     // TODO: Fix type issues with Supabase update
     // const { data, error } = await supabase
     //   .from('users')

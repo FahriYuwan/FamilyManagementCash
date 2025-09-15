@@ -10,42 +10,57 @@ export class FamilyService {
   }
 
   async getFamilyById(familyId: string): Promise<Family | null> {
-    const { data, error } = await this.supabase
-      .from('families')
-      .select(`
-        *,
-        members:users(*)
-      `)
-      .eq('id', familyId)
-      .single()
+    try {
+      const { data, error } = await this.supabase
+        .from('families')
+        .select(`
+          *,
+          members:users(*)
+        `)
+        .eq('id', familyId)
+        .single()
 
-    if (error) {
-      console.error('Error fetching family:', error)
+      if (error) {
+        console.error('Error fetching family:', error)
+        return null
+      }
+
+      return data as unknown as Family
+    } catch (error) {
+      console.error('Exception in getFamilyById:', error)
       return null
     }
-
-    return data as unknown as Family
   }
 
   async getFamilyByUserId(userId: string): Promise<Family | null> {
-    // First get the user's family_id
-    const { data: user, error: userError } = await this.supabase
-      .from('users')
-      .select('family_id')
-      .eq('id', userId)
-      .single()
+    try {
+      // First get the user's family_id
+      const { data: user, error: userError } = await this.supabase
+        .from('users')
+        .select('family_id')
+        .eq('id', userId)
+        .single()
 
-    if (userError || !user?.family_id) {
+      if (userError || !user?.family_id) {
+        return null
+      }
+
+      // Then get the family with members
+      return this.getFamilyById(user.family_id)
+    } catch (error) {
+      console.error('Exception in getFamilyByUserId:', error)
       return null
     }
-
-    // Then get the family with members
-    return this.getFamilyById(user.family_id)
   }
 
   async createFamily(name: string, creatorId: string, creatorRole: UserRole): Promise<{ family: Family | null; error: string | null }> {
     try {
       console.log('Creating family with parameters:', { name, creatorId, creatorRole });
+      
+      // Validate inputs
+      if (!name || !creatorId || !creatorRole) {
+        return { family: null, error: 'Invalid parameters: name, creatorId, and creatorRole are required' }
+      }
       
       // Check if user is already in a family
       const { data: existingUser, error: userCheckError } = await this.supabase
@@ -56,7 +71,7 @@ export class FamilyService {
 
       if (userCheckError) {
         console.error('Error checking user family status:', userCheckError)
-        return { family: null, error: 'Failed to check user status' }
+        return { family: null, error: 'Failed to check user status: ' + userCheckError.message }
       }
 
       if (existingUser?.family_id) {
@@ -65,28 +80,37 @@ export class FamilyService {
 
       // Create the family
       console.log('Attempting to create family with name:', name);
-      console.log('Supabase client:', this.supabase);
       const insertData = { name };
       console.log('Insert data:', insertData);
+      
       const { data: family, error: familyError } = await this.supabase
         .from('families')
-        .insert(insertData)
+        .insert([insertData]) // Wrap in array for consistency
         .select()
         .single()
+      
       console.log('Family insert result:', { data: family, error: familyError });
 
       if (familyError) {
         console.error('Error creating family:', familyError)
         console.error('Error code:', familyError.code)
         console.error('Error message:', familyError.message)
+        
+        // Handle specific error cases
         if (familyError.code === '42501' || familyError.message.includes('permission') || familyError.message.includes('403')) {
           console.error('RLS Policy Error Details:', {
             code: familyError.code,
             message: familyError.message,
             hint: familyError.hint
           });
-          return { family: null, error: 'Insufficient permissions to create family. Please check your account permissions. Error: ' + familyError.message }
+          return { family: null, error: 'Insufficient permissions to create family. Please check your account permissions.' }
         }
+        
+        // Handle network/timeout errors
+        if (familyError.message.includes('timeout') || familyError.message.includes('network')) {
+          return { family: null, error: 'Network timeout while creating family. Please try again.' }
+        }
+        
         return { family: null, error: 'Failed to create family: ' + familyError.message }
       }
       
@@ -101,7 +125,12 @@ export class FamilyService {
       if (userError) {
         console.error('Error updating user with family ID:', userError)
         // Try to clean up the created family since we couldn't assign the user to it
-        await this.supabase.from('families').delete().eq('id', family.id)
+        try {
+          await this.supabase.from('families').delete().eq('id', family.id)
+        } catch (cleanupError) {
+          console.error('Failed to cleanup family after user update error:', cleanupError)
+        }
+        
         if (userError.code === '42501' || userError.message.includes('permission') || userError.message.includes('403')) {
           return { family: null, error: 'Insufficient permissions to join family' }
         }
@@ -112,13 +141,18 @@ export class FamilyService {
       const familyData = await this.getFamilyById(family.id)
       return { family: familyData, error: null }
     } catch (error) {
-      console.error('Error creating family:', error)
+      console.error('Exception in createFamily:', error)
       return { family: null, error: 'Failed to create family: ' + (error as Error).message }
     }
   }
 
   async joinFamily(userId: string, familyId: string, userRole: UserRole): Promise<{ success: boolean; error: string | null }> {
     try {
+      // Validate inputs
+      if (!userId || !familyId || !userRole) {
+        return { success: false, error: 'Invalid parameters: userId, familyId, and userRole are required' }
+      }
+      
       // Check if user is already in a family
       const { data: existingUser, error: userCheckError } = await this.supabase
         .from('users')
@@ -128,7 +162,7 @@ export class FamilyService {
 
       if (userCheckError) {
         console.error('Error checking user family status:', userCheckError)
-        return { success: false, error: 'Failed to check user status' }
+        return { success: false, error: 'Failed to check user status: ' + userCheckError.message }
       }
 
       if (existingUser?.family_id) {
@@ -188,13 +222,18 @@ export class FamilyService {
 
       return { success: true, error: null }
     } catch (error) {
-      console.error('Error joining family:', error)
+      console.error('Exception in joinFamily:', error)
       return { success: false, error: 'Failed to join family: ' + (error as Error).message }
     }
   }
 
   async leaveFamily(userId: string): Promise<{ success: boolean; error: string | null }> {
     try {
+      // Validate input
+      if (!userId) {
+        return { success: false, error: 'Invalid parameter: userId is required' }
+      }
+      
       const { error } = await this.supabase
         .from('users')
         .update({ family_id: null })
@@ -210,55 +249,75 @@ export class FamilyService {
 
       return { success: true, error: null }
     } catch (error) {
-      console.error('Error leaving family:', error)
+      console.error('Exception in leaveFamily:', error)
       return { success: false, error: 'Failed to leave family: ' + (error as Error).message }
     }
   }
 
   async getFamilyMembers(familyId: string): Promise<User[]> {
-    const { data, error } = await this.supabase
-      .from('users')
-      .select('*')
-      .eq('family_id', familyId)
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('*')
+        .eq('family_id', familyId)
 
-    if (error) {
-      console.error('Error fetching family members:', error)
+      if (error) {
+        console.error('Error fetching family members:', error)
+        return []
+      }
+
+      return data as unknown as User[]
+    } catch (error) {
+      console.error('Exception in getFamilyMembers:', error)
       return []
     }
-
-    return data as unknown as User[]
   }
 
   async isFamilyMember(userId: string, familyId: string): Promise<boolean> {
-    const { data, error } = await this.supabase
-      .from('users')
-      .select('id')
-      .eq('id', userId)
-      .eq('family_id', familyId)
-      .single()
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .eq('family_id', familyId)
+        .single()
 
-    return !error && !!data
+      return !error && !!data
+    } catch (error) {
+      console.error('Exception in isFamilyMember:', error)
+      return false
+    }
   }
 
   // Subscribe to real-time updates for family members
   subscribeToFamilyMembers(familyId: string, callback: (payload: any) => void) {
-    return this.supabase
-      .channel('family-members-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'users',
-          filter: `family_id=eq.${familyId}`
-        },
-        callback
-      )
-      .subscribe()
+    try {
+      return this.supabase
+        .channel('family-members-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'users',
+            filter: `family_id=eq.${familyId}`
+          },
+          callback
+        )
+        .subscribe()
+    } catch (error) {
+      console.error('Exception in subscribeToFamilyMembers:', error)
+      return null
+    }
   }
 
   // Unsubscribe from real-time updates
   unsubscribeFromFamilyMembers(channel: any) {
-    return this.supabase.removeChannel(channel)
+    try {
+      return this.supabase.removeChannel(channel)
+    } catch (error) {
+      console.error('Exception in unsubscribeFromFamilyMembers:', error)
+      return null
+    }
   }
 }

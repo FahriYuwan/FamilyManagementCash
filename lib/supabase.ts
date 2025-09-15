@@ -9,8 +9,8 @@ let supabaseClient: ReturnType<typeof createBrowserClient<Database>> | null = nu
 const isBrowser = typeof window !== 'undefined'
 
 export function createClient() {
-  // Return cached client if available
-  if (supabaseClient) {
+  // Return cached client if available and we're in browser
+  if (supabaseClient && isBrowser) {
     return supabaseClient
   }
   
@@ -26,10 +26,33 @@ export function createClient() {
     isBrowser
   })
   
-  if (!supabaseUrl || !supabaseKey) {
-    const error = `Missing Supabase environment variables. URL: ${!!supabaseUrl}, KEY: ${!!supabaseKey}`
+  // More detailed environment variable checking
+  if (!supabaseUrl) {
+    const error = 'Missing NEXT_PUBLIC_SUPABASE_URL environment variable'
     console.error(error)
-    throw new Error(error)
+    if (!isBrowser) {
+      // In server environment, this might be expected during build
+      console.log('This might be expected during build time in server components')
+    }
+    // Don't throw error in server environment during build
+    if (isBrowser) {
+      throw new Error(error)
+    }
+    return null
+  }
+  
+  if (!supabaseKey) {
+    const error = 'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable'
+    console.error(error)
+    if (!isBrowser) {
+      // In server environment, this might be expected during build
+      console.log('This might be expected during build time in server components')
+    }
+    // Don't throw error in server environment during build
+    if (isBrowser) {
+      throw new Error(error)
+    }
+    return null
   }
   
   try {
@@ -55,6 +78,11 @@ export function createClient() {
     return supabaseClient
   } catch (err) {
     console.error('Failed to create Supabase browser client:', err)
+    // In production, we might want to return a fallback or null instead of throwing
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('Production mode: Returning null instead of throwing error')
+      return null
+    }
     throw err
   }
 }
@@ -73,6 +101,9 @@ export const getSupabaseClient = () => {
 export const getCurrentUser = async () => {
   try {
     const supabase = createClient()
+    if (!supabase) {
+      return { user: null, error: new Error('Supabase client not initialized') }
+    }
     const { data: { user }, error } = await supabase.auth.getUser()
     return { user, error }
   } catch (err) {
@@ -84,7 +115,11 @@ export const getCurrentUser = async () => {
 // Helper function to check if user is authenticated
 export const isAuthenticated = async () => {
   try {
-    const { user } = await getCurrentUser()
+    const { user, error } = await getCurrentUser()
+    if (error) {
+      console.error('isAuthenticated check failed:', error)
+      return false
+    }
     return !!user
   } catch (err) {
     console.error('isAuthenticated failed:', err)
