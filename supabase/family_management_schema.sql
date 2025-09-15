@@ -775,17 +775,6 @@ USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own edit history" 
 ON public.edit_history FOR DELETE 
 USING (auth.uid() = user_id);
-  )
-);
-
-CREATE POLICY "Users can delete debt payments" 
-ON public.debt_payments FOR DELETE 
-USING (
-  EXISTS (
-    SELECT 1 FROM public.debts d 
-    WHERE d.id = debt_id AND d.user_id = auth.uid()
-  )
-);
 
 -- ====================================================================
 -- STEP 11: GRANT PERMISSIONS
