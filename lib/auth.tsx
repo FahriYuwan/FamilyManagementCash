@@ -94,23 +94,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             members:users(*)
           `)
           .eq('id', userData.family_id)
-          .single()
+          .single();
 
         if (familyError) {
-          console.error('❌ Family fetch error:', familyError)
-          throw new Error(`Database error querying family: ${familyError.message} (Code: ${familyError.code})`)
+          console.error('❌ Family fetch error:', familyError);
+          // Coba cara alternatif untuk mengambil data keluarga
+          const { data: familyDataAlt, error: familyErrorAlt } = await supabase
+            .from('families')
+            .select('*')
+            .eq('id', userData.family_id)
+            .single();
+          
+          if (familyErrorAlt) {
+            console.error('❌ Alternative family fetch error:', familyErrorAlt);
+            throw new Error(`Database error querying family: ${familyErrorAlt.message} (Code: ${familyErrorAlt.code})`);
+          }
+          
+          // Ambil anggota keluarga secara terpisah
+          const { data: membersData, error: membersError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('family_id', userData.family_id);
+          
+          if (membersError) {
+            console.error('❌ Family members fetch error:', membersError);
+            throw new Error(`Database error querying family members: ${membersError.message} (Code: ${membersError.code})`);
+          }
+          
+          const completeFamilyData = {
+            ...familyDataAlt,
+            members: membersData || []
+          };
+          
+          console.log('✅ Family data with members (alternative method) fetched:', completeFamilyData);
+
+          // Combine user data with complete family data
+          const completeUserData = {
+            ...userData,
+            family: completeFamilyData
+          };
+
+          console.log('✅ Profile found with complete family data (alternative method):', completeUserData);
+          return completeUserData as unknown as User;
         }
 
-        console.log('✅ Family data with members fetched:', familyData)
+        console.log('✅ Family data with members fetched:', familyData);
 
         // Combine user data with complete family data
         const completeUserData = {
           ...userData,
           family: familyData
-        }
+        };
 
-        console.log('✅ Profile found with complete family data:', completeUserData)
-        return completeUserData as unknown as User
+        console.log('✅ Profile found with complete family data:', completeUserData);
+        return completeUserData as unknown as User;
       } else {
         // User has no family, return basic user data
         const userDataWithoutFamily = {
@@ -352,18 +389,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     if (!user) {
-      console.log('No user to refresh')
-      return
+      console.log('No user to refresh');
+      return;
     }
-    console.log('Refreshing user data for user:', user.id)
-    const profile = await getUserProfile(user.id)
-    if (profile) {
-      console.log('User profile refreshed with family data:', profile)
-      setUser(profile)
-    } else {
-      console.log('Failed to refresh user profile')
+    console.log('Refreshing user data for user:', user.id);
+    
+    // Tambahkan beberapa percobaan untuk memperbarui data
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (attempts < maxAttempts) {
+      try {
+        const profile = await getUserProfile(user.id);
+        if (profile) {
+          console.log('User profile refreshed with family data:', profile);
+          setUser(profile);
+          return;
+        } else {
+          console.log('Failed to refresh user profile, attempt:', attempts + 1);
+          attempts++;
+          // Tunggu sebentar sebelum mencoba lagi
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (error) {
+        console.error('Error refreshing user profile, attempt:', attempts + 1, error);
+        attempts++;
+        // Tunggu sebentar sebelum mencoba lagi
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
-  }
+    
+    console.log('Failed to refresh user profile after', maxAttempts, 'attempts');
+  };
 
   const createFamily = async (name: string): Promise<Family | null> => {
     if (!user) throw new Error('No user logged in')

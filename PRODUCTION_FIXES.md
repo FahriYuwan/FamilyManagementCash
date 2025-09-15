@@ -26,6 +26,8 @@
 - Corrected syntax errors in RLS policies
 - Ensured proper policy naming conventions
 - Resolved conflicting RLS policies on families table that prevented family creation
+- **Enhanced family member visibility by fixing RLS policies and data fetching logic**
+- **Improved real-time subscription handling for family members**
 
 ## 🛠️ Deployment Checklist
 
@@ -85,6 +87,19 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.com
 1. Verify real-time subscriptions are properly set up
 2. Check network connectivity to Supabase
 3. Ensure family members are properly linked in database
+4. **Verify that both users have joined the same family**
+5. **Check that the family_id is properly set for both users**
+6. **Ensure real-time subscriptions are properly cleaned up and re-established**
+
+### 🔴 Family Members Cannot See Each Other
+**Symptoms**: Users in the same family cannot see each other in the member list
+**Solutions**:
+1. **Verify both users have joined the same family using the same family ID**
+2. **Check that the family_id is properly set for both users in the database**
+3. **Re-run the main schema file: `supabase/family_management_schema.sql`**
+4. **Ensure real-time subscriptions are working correctly**
+5. **Verify that RLS policies allow family members to view each other's data**
+6. **Check that the getUserProfile function is properly fetching family data with all members**
 
 ### 🔴 Edit History Not Displaying
 **Symptoms**: Empty edit history, loading indicators stuck
@@ -174,60 +189,3 @@ After deployment, verify that all these features work correctly:
    - [ ] Error handling and user feedback
 
 The application is now production-ready with all the necessary fixes and improvements applied!
-
-# Production Fixes Documentation
-
-This document outlines the fixes and improvements made to ensure the FamilyManagementCash application works correctly in production.
-
-## Issues Fixed
-
-### 1. Missing Badge Component
-**Problem**: Build failed with "Module not found: Can't resolve '@/components/ui/badge'"
-**Solution**: 
-- Created a new Badge component in [components/ui/badge.tsx](file:///D:/File%20Fahri/File%20Kuliah/Semester%207/PKL/Try_Qoder/FamilyManagementCash/components/ui/badge.tsx)
-- Installed the required dependency: `class-variance-authority`
-- Ensured proper import path for utility functions
-
-### 2. Supabase Client Initialization Issues
-**Problem**: Type errors and runtime errors when creating Supabase clients in server components
-**Solution**:
-- Updated [app/api/db-health/route.ts](file:///D:/File%20Fahri/File%20Kuliah/Semester%207/PKL/Try_Qoder/FamilyManagementCash/app/api/db-health/route.ts) to handle cases where `createClient()` returns null
-- Enhanced error handling in [lib/supabase-server.ts](file:///D:/File%20Fahri/File%20Kuliah/Semester%207/PKL/Try_Qoder/FamilyManagementCash/lib/supabase-server.ts) with graceful degradation for production
-- Added proper validation of environment variables
-
-### 3. Environment Variable Handling
-**Problem**: Inconsistent handling of Supabase environment variables across different environments
-**Solution**:
-- Added validation checks for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- Implemented fallback mechanisms for production environments
-- Added better error logging for debugging
-
-## Deployment Verification
-
-The application now builds successfully with `npm run build` and all components are properly resolved.
-
-## Additional Improvements
-
-### Enhanced Error Handling
-- Added more descriptive error messages
-- Implemented graceful degradation for non-critical failures
-- Improved logging for debugging production issues
-
-### Code Quality
-- Fixed type safety issues
-- Resolved module resolution problems
-- Ensured consistent error handling patterns
-
-## Testing
-
-To verify these fixes:
-1. Run `npm run build` to ensure successful compilation
-2. Check that all routes load without module resolution errors
-3. Verify that Supabase connections work correctly
-4. Test family management features in production environment
-
-## Future Considerations
-
-- Monitor application logs for any remaining issues
-- Consider implementing more comprehensive health checks
-- Review security policies for production deployment

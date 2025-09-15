@@ -11,25 +11,38 @@ Both the father (ayah) and mother (ibu) were only seeing themselves as family me
 
 3. **Family Data Refresh Issue**: When a new user joined a family, only that user's data was refreshed, but existing family members' data was not updated.
 
+4. **Duplicate Policy Issue**: There were conflicting RLS policies on the families table that caused errors when creating families.
+
+5. **Data Fetching Issue**: The getUserProfile function sometimes failed to fetch complete family data with all members.
+
 ## Fixes Implemented
 
 ### 1. Enabled RLS on Families Table
 - Removed `DISABLE ROW LEVEL SECURITY` from families table
 - Enabled proper RLS policies for family access
+- Removed duplicate INSERT policy that was causing conflicts
 
 ### 2. Improved Real-time Subscription Handling
 - Separated the family subscription effect in the settings page
 - Made the subscription dependent on `user?.family_id` so it updates when a user joins/leaves a family
 - Added proper cleanup of subscriptions when components unmount
+- Enhanced the subscribeToFamilyMembers function with better error handling
 
 ### 3. Enhanced Family Data Fetching
 - Added better logging to `getUserProfile` function to trace data flow
 - Improved error handling in family service methods
 - Ensured family data with all members is properly fetched when a user belongs to a family
+- Added fallback mechanism when primary query fails
 
 ### 4. Better Real-time Updates
 - Modified the family service to properly handle real-time updates
 - Ensured that when a user joins a family, the subscription will detect changes to users with the same family_id
+- Added delays to ensure database updates are completed before refreshing UI
+
+### 5. Enhanced Data Refresh Mechanism
+- Improved the refreshUser function with retry mechanism
+- Added refreshUser to dependencies in the settings page effect
+- Enhanced error handling and logging
 
 ## How It Should Work Now
 
@@ -50,10 +63,11 @@ Both the father (ayah) and mother (ibu) were only seeing themselves as family me
 
 ## Files Modified
 
-- `lib/auth.tsx` - Enhanced getUserProfile function with better logging
+- `lib/auth.tsx` - Enhanced getUserProfile function with better logging and fallback mechanism
 - `lib/family-service.ts` - Improved real-time subscription handling
 - `app/settings/page.tsx` - Fixed real-time subscription setup and cleanup
-- `supabase/family_management_schema.sql` - Enabled RLS on families table and removed duplicate policy
+- `app/dashboard/family-dashboard.tsx` - Improved real-time subscription setup and cleanup
+- `supabase/family_management_schema.sql` - Enabled RLS on families table, removed duplicate policy, enhanced set_family_id function
 
 ## Database Query to Verify Fix
 

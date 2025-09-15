@@ -27,7 +27,6 @@ export class FamilyService {
       }
 
       console.log('Family data fetched with members:', data);
-      console.log('Members count:', data?.members?.length || 0);
       return data as unknown as Family
     } catch (error) {
       console.error('Exception in getFamilyById:', error)
@@ -228,13 +227,6 @@ export class FamilyService {
         return { success: false, error: 'Failed to join family: ' + error.message }
       }
 
-      // Notify other family members about the new member
-      if (existingMembers && existingMembers.length > 0) {
-        console.log('Notifying existing family members about new member');
-        // In a real implementation, we might use Supabase's broadcast feature or similar
-        // For now, we'll rely on the real-time subscription to pick up the change
-      }
-
       console.log('Successfully joined family')
       return { success: true, error: null }
     } catch (error) {
@@ -309,8 +301,19 @@ export class FamilyService {
   subscribeToFamilyMembers(familyId: string, callback: (payload: any) => void) {
     try {
       console.log('Subscribing to family members changes for family:', familyId);
+      
+      // Unsubscribe from any existing channel first
+      if (this.supabase.getChannels().length > 0) {
+        const existingChannels = this.supabase.getChannels();
+        existingChannels.forEach(channel => {
+          if (channel.topic.startsWith('realtime:family-members-changes')) {
+            this.supabase.removeChannel(channel);
+          }
+        });
+      }
+      
       const channel = this.supabase
-        .channel('family-members-changes')
+        .channel(`family-members-changes:${familyId}`)
         .on(
           'postgres_changes',
           {
@@ -322,16 +325,20 @@ export class FamilyService {
           callback
         )
         .subscribe((status: any) => {
-          console.log('Family members subscription status:', status)
+          console.log('Family members subscription status:', status);
           if (status === 'SUBSCRIBED') {
-            console.log('Successfully subscribed to family members changes')
+            console.log('Successfully subscribed to family members changes');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Error subscribing to family members changes');
+          } else if (status === 'CLOSED') {
+            console.log('Family members subscription closed');
           }
-        })
+        });
       
-      return channel
+      return channel;
     } catch (error) {
-      console.error('Exception in subscribeToFamilyMembers:', error)
-      return null
+      console.error('Exception in subscribeToFamilyMembers:', error);
+      return null;
     }
   }
 

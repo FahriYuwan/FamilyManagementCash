@@ -124,47 +124,64 @@ export default function FamilyDashboardPage() {
   }
 
   const setupRealTimeSubscriptions = (familyId: string) => {
-    const householdService = new HouseholdService()
-    const businessService = new BusinessService()
-    const debtService = new DebtService()
-    const familyService = new FamilyService()
+    const householdService = new HouseholdService();
+    const businessService = new BusinessService();
+    const debtService = new DebtService();
+    const familyService = new FamilyService();
+    
+    // Unsubscribe from existing channels first
+    if (householdChannelRef.current) {
+      householdService.unsubscribeFromFamilyTransactions(householdChannelRef.current);
+    }
+    if (businessChannelRef.current) {
+      businessService.unsubscribeFromFamilyOrders(businessChannelRef.current);
+    }
+    if (debtChannelRef.current) {
+      debtService.unsubscribeFromFamilyDebts(debtChannelRef.current);
+    }
+    if (familyChannelRef.current) {
+      familyService.unsubscribeFromFamilyMembers(familyChannelRef.current);
+    }
     
     // Subscribe to household transactions
     householdChannelRef.current = householdService.subscribeToFamilyTransactions(
       familyId,
       (payload: any) => {
-        console.log('Household transaction updated:', payload)
-        loadDashboardData() // Refresh data when transactions change
+        console.log('Household transaction updated:', payload);
+        loadDashboardData(); // Refresh data when transactions change
       }
-    )
+    );
     
     // Subscribe to business orders
     businessChannelRef.current = businessService.subscribeToFamilyOrders(
       familyId,
       (payload: any) => {
-        console.log('Business order updated:', payload)
-        loadDashboardData() // Refresh data when orders change
+        console.log('Business order updated:', payload);
+        loadDashboardData(); // Refresh data when orders change
       }
-    )
+    );
     
     // Subscribe to debts
     debtChannelRef.current = debtService.subscribeToFamilyDebts(
       familyId,
       (payload: any) => {
-        console.log('Debt updated:', payload)
-        loadDashboardData() // Refresh data when debts change
+        console.log('Debt updated:', payload);
+        loadDashboardData(); // Refresh data when debts change
       }
-    )
+    );
     
     // Subscribe to family members
     familyChannelRef.current = familyService.subscribeToFamilyMembers(
       familyId,
       (payload: any) => {
-        console.log('Family member updated:', payload)
-        loadFamilyData() // Refresh family data when members change
+        console.log('Family member updated:', payload);
+        // Add a small delay to ensure database is updated
+        setTimeout(() => {
+          loadFamilyData(); // Refresh family data when members change
+        }, 1500);
       }
-    )
-  }
+    );
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true)

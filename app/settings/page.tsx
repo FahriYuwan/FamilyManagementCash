@@ -136,27 +136,28 @@ export default function SettingsPage() {
       // Clear any existing subscription
       if (familySubscriptionRef.current) {
         console.log('Unsubscribing from previous family subscription');
-        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
+        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current);
+        familySubscriptionRef.current = null;
       }
       
       // Set up new subscription
       familySubscriptionRef.current = familyServiceRef.current.subscribeToFamilyMembers(
         user.family_id,
         (payload: any) => {
-          console.log('Family member change detected:', payload)
+          console.log('Family member change detected:', payload);
           // Add a small delay to ensure database is updated
           setTimeout(async () => {
             console.log('Refreshing user data after family change');
-            await refreshUser()
-          }, 1500)
+            await refreshUser();
+          }, 2000); // Increased delay to 2 seconds
         }
-      )
+      );
     } else {
       // User is not in a family, unsubscribe from any previous subscription
       if (familySubscriptionRef.current) {
         console.log('User not in family, unsubscribing from family subscription');
-        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
-        familySubscriptionRef.current = null
+        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current);
+        familySubscriptionRef.current = null;
       }
     }
     
@@ -164,10 +165,10 @@ export default function SettingsPage() {
     return () => {
       if (familySubscriptionRef.current) {
         console.log('Cleaning up family subscription on component unmount');
-        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
+        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current);
       }
-    }
-  }, [user?.family_id]) // Only re-run when family_id changes
+    };
+  }, [user?.family_id, refreshUser]); // Added refreshUser to dependencies
 
   const loadData = async () => {
     try {

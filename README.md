@@ -207,6 +207,9 @@ If you encounter issues with the application:
 
 2. **Family Members Cannot See Each Other**
    - Re-run the main schema file: `supabase/family_management_schema.sql`
+   - Ensure both users have joined the same family
+   - Check that the family_id is properly set for both users
+   - Verify that real-time subscriptions are working correctly
 
 3. **Authentication Issues**
    - Verify environment variables are set correctly
@@ -215,6 +218,7 @@ If you encounter issues with the application:
 4. **Real-time Sync Issues**
    - Ensure family members have proper family_id relationships
    - Check database triggers and RLS policies
+   - Verify that real-time subscriptions are properly set up
 
 ## 📚 Additional Documentation
 
