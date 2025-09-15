@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => reject(new Error('Table access timeout')), 3000)
       )
       
-      const { error: testError } = await Promise.race([testPromise, testTimeoutPromise])
+      const { error: testError } = await Promise.race([testPromise, testTimeoutPromise]) as any
       
       if (testError) {
         console.error('❌ Users table access test failed:', testError)
@@ -287,7 +287,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await familyService.createFamily(name, user.id, user.role)
       
       if (result.error) {
-        alert(result.error)
+        console.error('Error creating family:', result.error)
+        alert('Error: ' + result.error)
         return null
       }
       
@@ -296,6 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return result.family
     } catch (error) {
       console.error('Error creating family:', error)
+      alert('Error creating family: ' + (error as Error).message)
       return null
     }
   }
@@ -307,7 +309,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await familyService.joinFamily(user.id, familyId, user.role)
       
       if (result.error) {
-        alert(result.error)
+        console.error('Error joining family:', result.error)
+        alert('Error: ' + result.error)
         return false
       }
       
@@ -316,6 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return result.success
     } catch (error) {
       console.error('Error joining family:', error)
+      alert('Error joining family: ' + (error as Error).message)
       return false
     }
   }
@@ -327,7 +331,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await familyService.leaveFamily(user.id)
       
       if (result.error) {
-        alert(result.error)
+        console.error('Error leaving family:', result.error)
+        alert('Error: ' + result.error)
         return false
       }
       
@@ -336,6 +341,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return result.success
     } catch (error) {
       console.error('Error leaving family:', error)
+      alert('Error leaving family: ' + (error as Error).message)
       return false
     }
   }

@@ -356,7 +356,7 @@ export default function SettingsPage() {
                         type="text"
                         value={newCategory.name}
                         onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                         placeholder="Nama kategori"
                       />
                     </div>
@@ -366,7 +366,7 @@ export default function SettingsPage() {
                         type="text"
                         value={newCategory.icon}
                         onChange={(e) => setNewCategory({ ...newCategory, icon: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                         placeholder="🏠"
                       />
                     </div>
@@ -409,13 +409,13 @@ export default function SettingsPage() {
                           type="text"
                           value={editingCategory.name}
                           onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                         />
                         <input
                           type="text"
                           value={editingCategory.icon || ''}
                           onChange={(e) => setEditingCategory({ ...editingCategory, icon: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                           placeholder="Icon"
                         />
                         <div className="grid grid-cols-6 gap-1">
@@ -569,7 +569,7 @@ export default function SettingsPage() {
                             type="text"
                             value={joinFamilyId}
                             onChange={(e) => setJoinFamilyId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                             placeholder="Enter family ID"
                           />
                         </div>
@@ -604,7 +604,7 @@ export default function SettingsPage() {
                   <select
                     value={preferences.theme}
                     onChange={(e) => setPreferences({ ...preferences, theme: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                   >
                     <option value="light">Terang</option>
                     <option value="dark">Gelap</option>
@@ -616,7 +616,7 @@ export default function SettingsPage() {
                   <select
                     value={preferences.language}
                     onChange={(e) => setPreferences({ ...preferences, language: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                   >
                     <option value="en">English</option>
                     <option value="id">Bahasa Indonesia</option>
@@ -638,7 +638,7 @@ export default function SettingsPage() {
                   <select
                     value={preferences.currency}
                     onChange={(e) => setPreferences({ ...preferences, currency: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                   >
                     {CURRENCIES.map((currency) => (
                       <option key={currency.code} value={currency.code}>
@@ -652,7 +652,7 @@ export default function SettingsPage() {
                   <select
                     value={preferences.dateFormat}
                     onChange={(e) => setPreferences({ ...preferences, dateFormat: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
                   >
                     <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                     <option value="DD/MM/YYYY">DD/MM/YYYY</option>

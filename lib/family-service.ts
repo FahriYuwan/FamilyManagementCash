@@ -42,11 +42,16 @@ export class FamilyService {
   async createFamily(name: string, creatorId: string, creatorRole: UserRole): Promise<{ family: Family | null; error: string | null }> {
     try {
       // Check if user is already in a family
-      const { data: existingUser } = await this.supabase
+      const { data: existingUser, error: userCheckError } = await this.supabase
         .from('users')
         .select('family_id')
         .eq('id', creatorId)
         .single()
+
+      if (userCheckError) {
+        console.error('Error checking user family status:', userCheckError)
+        return { family: null, error: 'Failed to check user status' }
+      }
 
       if (existingUser?.family_id) {
         return { family: null, error: 'You are already part of a family' }
@@ -59,7 +64,13 @@ export class FamilyService {
         .select()
         .single()
 
-      if (familyError) throw familyError
+      if (familyError) {
+        console.error('Error creating family:', familyError)
+        if (familyError.code === '42501') {
+          return { family: null, error: 'Insufficient permissions to create family' }
+        }
+        return { family: null, error: 'Failed to create family: ' + familyError.message }
+      }
 
       // Update the creator's family_id
       const { error: userError } = await this.supabase
@@ -67,25 +78,38 @@ export class FamilyService {
         .update({ family_id: family.id })
         .eq('id', creatorId)
 
-      if (userError) throw userError
+      if (userError) {
+        console.error('Error updating user with family ID:', userError)
+        // Try to clean up the created family since we couldn't assign the user to it
+        await this.supabase.from('families').delete().eq('id', family.id)
+        if (userError.code === '42501') {
+          return { family: null, error: 'Insufficient permissions to join family' }
+        }
+        return { family: null, error: 'Failed to join family: ' + userError.message }
+      }
 
       // Return the family with members
       const familyData = await this.getFamilyById(family.id)
       return { family: familyData, error: null }
     } catch (error) {
       console.error('Error creating family:', error)
-      return { family: null, error: 'Failed to create family' }
+      return { family: null, error: 'Failed to create family: ' + (error as Error).message }
     }
   }
 
   async joinFamily(userId: string, familyId: string, userRole: UserRole): Promise<{ success: boolean; error: string | null }> {
     try {
       // Check if user is already in a family
-      const { data: existingUser } = await this.supabase
+      const { data: existingUser, error: userCheckError } = await this.supabase
         .from('users')
         .select('family_id')
         .eq('id', userId)
         .single()
+
+      if (userCheckError) {
+        console.error('Error checking user family status:', userCheckError)
+        return { success: false, error: 'Failed to check user status' }
+      }
 
       if (existingUser?.family_id) {
         return { success: false, error: 'You are already part of a family' }
@@ -98,7 +122,15 @@ export class FamilyService {
         .eq('id', familyId)
         .single()
 
-      if (familyError || !family) {
+      if (familyError) {
+        console.error('Error finding family:', familyError)
+        if (familyError.code === 'PGRST116') {
+          return { success: false, error: 'Family not found' }
+        }
+        return { success: false, error: 'Failed to find family: ' + familyError.message }
+      }
+
+      if (!family) {
         return { success: false, error: 'Family not found' }
       }
 
@@ -109,7 +141,8 @@ export class FamilyService {
         .eq('family_id', familyId)
 
       if (membersError) {
-        return { success: false, error: 'Failed to check family members' }
+        console.error('Error checking family members:', membersError)
+        return { success: false, error: 'Failed to check family members: ' + membersError.message }
       }
 
       // Check if there's already a member with the same role
@@ -125,12 +158,18 @@ export class FamilyService {
         .update({ family_id: familyId })
         .eq('id', userId)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error joining family:', error)
+        if (error.code === '42501') {
+          return { success: false, error: 'Insufficient permissions to join family' }
+        }
+        return { success: false, error: 'Failed to join family: ' + error.message }
+      }
 
       return { success: true, error: null }
     } catch (error) {
       console.error('Error joining family:', error)
-      return { success: false, error: 'Failed to join family' }
+      return { success: false, error: 'Failed to join family: ' + (error as Error).message }
     }
   }
 
@@ -141,12 +180,18 @@ export class FamilyService {
         .update({ family_id: null })
         .eq('id', userId)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error leaving family:', error)
+        if (error.code === '42501') {
+          return { success: false, error: 'Insufficient permissions to leave family' }
+        }
+        return { success: false, error: 'Failed to leave family: ' + error.message }
+      }
 
       return { success: true, error: null }
     } catch (error) {
       console.error('Error leaving family:', error)
-      return { success: false, error: 'Failed to leave family' }
+      return { success: false, error: 'Failed to leave family: ' + (error as Error).message }
     }
   }
 

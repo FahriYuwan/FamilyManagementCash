@@ -484,6 +484,12 @@ USING (
   EXISTS (SELECT 1 FROM public.users WHERE family_id = families.id AND id = auth.uid())
 );
 
+CREATE POLICY "Users can insert families" 
+ON public.families FOR INSERT 
+WITH CHECK (
+  true
+);
+
 -- Household categories policies
 CREATE POLICY "Users can view household categories" 
 ON public.household_categories FOR SELECT 
