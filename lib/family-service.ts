@@ -66,8 +66,8 @@ export class FamilyService {
 
       if (familyError) {
         console.error('Error creating family:', familyError)
-        if (familyError.code === '42501') {
-          return { family: null, error: 'Insufficient permissions to create family' }
+        if (familyError.code === '42501' || familyError.message.includes('permission')) {
+          return { family: null, error: 'Insufficient permissions to create family. Please check your account permissions.' }
         }
         return { family: null, error: 'Failed to create family: ' + familyError.message }
       }
