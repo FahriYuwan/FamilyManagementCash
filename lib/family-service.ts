@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { createClient } from '@/lib/supabase'
-import { Family, User } from '@/types'
+import { Family, User, UserRole } from '@/types'
 
 export class FamilyService {
   private supabase = createClient()
@@ -39,8 +39,19 @@ export class FamilyService {
     return this.getFamilyById(user.family_id)
   }
 
-  async createFamily(name: string, creatorId: string): Promise<Family | null> {
+  async createFamily(name: string, creatorId: string, creatorRole: UserRole): Promise<{ family: Family | null; error: string | null }> {
     try {
+      // Check if user is already in a family
+      const { data: existingUser } = await this.supabase
+        .from('users')
+        .select('family_id')
+        .eq('id', creatorId)
+        .single()
+
+      if (existingUser?.family_id) {
+        return { family: null, error: 'You are already part of a family' }
+      }
+
       // Create the family
       const { data: family, error: familyError } = await this.supabase
         .from('families')
@@ -59,38 +70,83 @@ export class FamilyService {
       if (userError) throw userError
 
       // Return the family with members
-      return this.getFamilyById(family.id)
+      const familyData = await this.getFamilyById(family.id)
+      return { family: familyData, error: null }
     } catch (error) {
       console.error('Error creating family:', error)
-      return null
+      return { family: null, error: 'Failed to create family' }
     }
   }
 
-  async joinFamily(userId: string, familyId: string): Promise<boolean> {
+  async joinFamily(userId: string, familyId: string, userRole: UserRole): Promise<{ success: boolean; error: string | null }> {
     try {
+      // Check if user is already in a family
+      const { data: existingUser } = await this.supabase
+        .from('users')
+        .select('family_id')
+        .eq('id', userId)
+        .single()
+
+      if (existingUser?.family_id) {
+        return { success: false, error: 'You are already part of a family' }
+      }
+
+      // Check if family exists
+      const { data: family, error: familyError } = await this.supabase
+        .from('families')
+        .select('*')
+        .eq('id', familyId)
+        .single()
+
+      if (familyError || !family) {
+        return { success: false, error: 'Family not found' }
+      }
+
+      // Check if family already has a member with the same role
+      const { data: existingMembers, error: membersError } = await this.supabase
+        .from('users')
+        .select('role')
+        .eq('family_id', familyId)
+
+      if (membersError) {
+        return { success: false, error: 'Failed to check family members' }
+      }
+
+      // Check if there's already a member with the same role
+      const hasRoleMember = existingMembers.some((member: any) => member.role === userRole)
+      if (hasRoleMember) {
+        const roleText = userRole === 'ayah' ? 'father (ayah)' : 'mother (ibu)'
+        return { success: false, error: `This family already has a ${roleText}` }
+      }
+
+      // Join the family
       const { error } = await this.supabase
         .from('users')
         .update({ family_id: familyId })
         .eq('id', userId)
 
-      return !error
+      if (error) throw error
+
+      return { success: true, error: null }
     } catch (error) {
       console.error('Error joining family:', error)
-      return false
+      return { success: false, error: 'Failed to join family' }
     }
   }
 
-  async leaveFamily(userId: string): Promise<boolean> {
+  async leaveFamily(userId: string): Promise<{ success: boolean; error: string | null }> {
     try {
       const { error } = await this.supabase
         .from('users')
         .update({ family_id: null })
         .eq('id', userId)
 
-      return !error
+      if (error) throw error
+
+      return { success: true, error: null }
     } catch (error) {
       console.error('Error leaving family:', error)
-      return false
+      return { success: false, error: 'Failed to leave family' }
     }
   }
 

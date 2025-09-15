@@ -58,14 +58,19 @@ Aplikasi PWA (Progressive Web App) untuk pencatatan keuangan keluarga yang memis
 - **Sinkronisasi data keluarga secara real-time**
 - **Tampilan konsolidasi data keuangan keluarga**
 
-### 👨‍👩‍👧‍👦 Sinkronisasi Keluarga (Fitur Baru)
+### 👨‍👩‍👧‍👦 Manajemen Keluarga (Fitur Baru)
 - Pembuatan grup keluarga untuk menghubungkan akun anggota keluarga
+- **Batasan satu ayah (ayah) dan satu ibu (ibu) per keluarga**
 - Berbagi data keuangan rumah tangga antar anggota keluarga
 - Berbagi data usaha konveksi (hanya untuk pengguna dengan role "Ayah")
 - Berbagi data utang/piutang antar anggota keluarga
 - Pembaruan data secara real-time tanpa perlu refresh manual
 - Tampilan dashboard konsolidasi untuk melihat keuangan keluarga secara keseluruhan
 - Kontrol akses: pengguna hanya dapat mengedit data yang mereka buat sendiri
+- Manajemen keluarga melalui halaman pengaturan:
+  - Membuat keluarga baru
+  - Bergabung dengan keluarga yang sudah ada
+  - Meninggalkan keluarga saat ini
 
 ## 🛠️ Tech Stack
 

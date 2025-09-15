@@ -18,7 +18,11 @@ import {
   User,
   Bell,
   Shield,
-  Database
+  Database,
+  Users,
+  PlusCircle,
+  LogIn,
+  LogOut
 } from 'lucide-react'
 import { HouseholdCategory } from '@/types'
 
@@ -75,7 +79,7 @@ const COLOR_OPTIONS = [
 ]
 
 export default function SettingsPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, createFamily, joinFamily, leaveFamily } = useAuth()
   const [categories, setCategories] = useState<HouseholdCategory[]>([])
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: 'light',
@@ -101,6 +105,13 @@ export default function SettingsPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [dataLoading, setDataLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  
+  // Family management states
+  const [showCreateFamilyForm, setShowCreateFamilyForm] = useState(false)
+  const [showJoinFamilyForm, setShowJoinFamilyForm] = useState(false)
+  const [newFamilyName, setNewFamilyName] = useState('')
+  const [joinFamilyId, setJoinFamilyId] = useState('')
+  const [familyOperationLoading, setFamilyOperationLoading] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -208,6 +219,77 @@ export default function SettingsPage() {
       alert('Error adding default categories')
     }
   }
+  
+  // Family management functions
+  const handleCreateFamily = async () => {
+    if (!newFamilyName.trim()) {
+      alert('Please enter a family name')
+      return
+    }
+    
+    try {
+      setFamilyOperationLoading(true)
+      const family = await createFamily(newFamilyName)
+      if (family) {
+        alert('Family created successfully!')
+        setNewFamilyName('')
+        setShowCreateFamilyForm(false)
+        await loadData() // Refresh data to show family info
+      } else {
+        alert('Error creating family')
+      }
+    } catch (error) {
+      console.error('Error creating family:', error)
+      alert('Error creating family')
+    } finally {
+      setFamilyOperationLoading(false)
+    }
+  }
+  
+  const handleJoinFamily = async () => {
+    if (!joinFamilyId.trim()) {
+      alert('Please enter a family ID')
+      return
+    }
+    
+    try {
+      setFamilyOperationLoading(true)
+      const success = await joinFamily(joinFamilyId)
+      if (success) {
+        alert('Joined family successfully!')
+        setJoinFamilyId('')
+        setShowJoinFamilyForm(false)
+        await loadData() // Refresh data to show family info
+      } else {
+        alert('Error joining family')
+      }
+    } catch (error) {
+      console.error('Error joining family:', error)
+      alert('Error joining family')
+    } finally {
+      setFamilyOperationLoading(false)
+    }
+  }
+  
+  const handleLeaveFamily = async () => {
+    if (!confirm('Are you sure you want to leave your family?')) return
+    
+    try {
+      setFamilyOperationLoading(true)
+      const success = await leaveFamily()
+      if (success) {
+        alert('Left family successfully!')
+        await loadData() // Refresh data to show updated family info
+      } else {
+        alert('Error leaving family')
+      }
+    } catch (error) {
+      console.error('Error leaving family:', error)
+      alert('Error leaving family')
+    } finally {
+      setFamilyOperationLoading(false)
+    }
+  }
 
   if (loading || dataLoading) {
     return (
@@ -223,40 +305,42 @@ export default function SettingsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-600 mt-2">Manage your preferences and categories</p>
         </div>
-        <Button onClick={savePreferences} disabled={saving}>
+        <Button onClick={savePreferences} disabled={saving} className="w-full sm:w-auto">
           <Save className="h-4 w-4 mr-2" />
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
 
       <Tabs defaultValue="categories" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="family">Family</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy</TabsTrigger>
         </TabsList>
 
         <TabsContent value="categories" className="space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <CardTitle>Expense Categories</CardTitle>
                 <CardDescription>Manage your transaction categories</CardDescription>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <Button onClick={addDefaultCategories} variant="outline" size="sm">
                   <Database className="h-4 w-4 mr-2" />
-                  Add Defaults
+                  <span className="hidden sm:inline">Add Defaults</span>
+                  <span className="sm:hidden">Defaults</span>
                 </Button>
                 <Button onClick={() => setShowAddForm(true)} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Category
+                  <span className="hidden sm:inline">Add Category</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               </div>
             </CardHeader>
@@ -297,6 +381,7 @@ export default function SettingsPage() {
                               newCategory.color === color ? 'border-gray-900' : 'border-gray-300'
                             }`}
                             style={{ backgroundColor: color }}
+                            aria-label={`Select color ${color}`}
                           />
                         ))}
                       </div>
@@ -315,7 +400,7 @@ export default function SettingsPage() {
               )}
 
               {/* Categories List */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {categories.map((category) => (
                   <div key={category.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     {editingCategory?.id === category.id ? (
@@ -342,6 +427,7 @@ export default function SettingsPage() {
                                 editingCategory.color === color ? 'border-gray-900 border-2' : 'border-gray-300'
                               }`}
                               style={{ backgroundColor: color }}
+                              aria-label={`Select color ${color}`}
                             />
                           ))}
                         </div>
@@ -394,6 +480,111 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="family" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Family Management
+              </CardTitle>
+              <CardDescription>Manage your family group and members</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {user?.family_id ? (
+                // User is already in a family
+                <div className="space-y-4">
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h3 className="font-medium text-blue-900">Current Family</h3>
+                    <p className="text-blue-700 mt-1">You are currently a member of family: {user.family?.name}</p>
+                    <p className="text-sm text-blue-600 mt-2">Family ID: {user.family_id}</p>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleLeaveFamily} 
+                    variant="destructive" 
+                    disabled={familyOperationLoading}
+                    className="w-full sm:w-auto"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {familyOperationLoading ? 'Processing...' : 'Leave Family'}
+                  </Button>
+                </div>
+              ) : (
+                // User is not in a family
+                <div className="space-y-6">
+                  <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                    <h3 className="font-medium text-yellow-900">Not in a Family</h3>
+                    <p className="text-yellow-700 mt-1">You are not currently part of any family group.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <PlusCircle className="h-5 w-5 mr-2" />
+                          Create New Family
+                        </CardTitle>
+                        <CardDescription>Create a new family group</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Family Name</label>
+                          <input
+                            type="text"
+                            value={newFamilyName}
+                            onChange={(e) => setNewFamilyName(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            placeholder="Enter family name"
+                          />
+                        </div>
+                        <Button 
+                          onClick={handleCreateFamily} 
+                          disabled={familyOperationLoading}
+                          className="w-full"
+                        >
+                          {familyOperationLoading ? 'Creating...' : 'Create Family'}
+                        </Button>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Note: Only one father (ayah) and one mother (ibu) can be in each family.
+                        </p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <LogIn className="h-5 w-5 mr-2" />
+                          Join Existing Family
+                        </CardTitle>
+                        <CardDescription>Join an existing family group</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Family ID</label>
+                          <input
+                            type="text"
+                            value={joinFamilyId}
+                            onChange={(e) => setJoinFamilyId(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            placeholder="Enter family ID"
+                          />
+                        </div>
+                        <Button 
+                          onClick={handleJoinFamily} 
+                          disabled={familyOperationLoading}
+                          className="w-full"
+                        >
+                          {familyOperationLoading ? 'Joining...' : 'Join Family'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -542,93 +733,6 @@ export default function SettingsPage() {
                       <span className="text-sm">Laporan keuangan bulanan</span>
                     </label>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="privacy" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 mr-2" />
-                Privacy & Security
-              </CardTitle>
-              <CardDescription>Kontrol data dan pengaturan privasi Anda</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h4 className="font-medium mb-3">Visibilitas Profil</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      value="private"
-                      checked={preferences.privacy.profile_visibility === 'private'}
-                      onChange={(e) => setPreferences({
-                        ...preferences,
-                        privacy: { ...preferences.privacy, profile_visibility: e.target.value as any }
-                      })}
-                      className="text-primary-600 focus:ring-primary-500"
-                    />
-                    <div>
-                      <span className="text-sm font-medium">Pribadi</span>
-                      <p className="text-xs text-gray-500">Hanya Anda yang dapat melihat data keuangan Anda</p>
-                    </div>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      value="family"
-                      checked={preferences.privacy.profile_visibility === 'family'}
-                      onChange={(e) => setPreferences({
-                        ...preferences,
-                        privacy: { ...preferences.privacy, profile_visibility: e.target.value as any }
-                      })}
-                      className="text-primary-600 focus:ring-primary-500"
-                    />
-                    <div>
-                      <span className="text-sm font-medium">Keluarga</span>
-                      <p className="text-xs text-gray-500">Anggota keluarga dapat melihat data Anda</p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="font-medium">Preferensi Data</h4>
-                <div className="space-y-3">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={preferences.privacy.data_sharing}
-                      onChange={(e) => setPreferences({
-                        ...preferences,
-                        privacy: { ...preferences.privacy, data_sharing: e.target.checked }
-                      })}
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <div>
-                      <span className="text-sm">Izinkan berbagi data untuk perbaikan aplikasi</span>
-                      <p className="text-xs text-gray-500">Data anonim untuk membantu meningkatkan aplikasi</p>
-                    </div>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={preferences.privacy.analytics}
-                      onChange={(e) => setPreferences({
-                        ...preferences,
-                        privacy: { ...preferences.privacy, analytics: e.target.checked }
-                      })}
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <div>
-                      <span className="text-sm">Allow analytics</span>
-                      <p className="text-xs text-gray-500">Help us understand how you use the app</p>
-                    </div>
-                  </label>
                 </div>
               </div>
             </CardContent>

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { User, UserRole, Family } from '@/types'
 import { Database } from '@/types/supabase'
 import { createClient } from '@/lib/supabase'
+import { FamilyService } from '@/lib/family-service'
 
 interface AuthContextType {
   user: User | null
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
+  const familyService = new FamilyService()
 
   const getUserProfile = async (userId: string): Promise<User | null> => {
     try {
@@ -66,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
       )
 
-      const { data, error } = await Promise.race([profilePromise, profileTimeoutPromise])
+      const { data, error } = await Promise.race([profilePromise, profileTimeoutPromise]) as any
 
       if (error) {
         console.error('❌ Profile fetch error:', error)
@@ -175,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
     
     try {
-      const { data, error } = await Promise.race([loginPromise, timeoutPromise])
+      const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any
       
       if (error) throw error
       
@@ -188,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         )
         
         try {
-          const profile = await Promise.race([profilePromise, profileTimeoutPromise])
+          const profile = await Promise.race([profilePromise, profileTimeoutPromise]) as any
           if (profile) {
             setUser(profile)
             console.log('✅ Login completed successfully')
@@ -239,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
     
     try {
-      const { data, error } = await Promise.race([signUpPromise, timeoutPromise])
+      const { data, error } = await Promise.race([signUpPromise, timeoutPromise]) as any
       
       if (error) throw error
       
@@ -282,32 +284,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) throw new Error('No user logged in')
     
     try {
-      // Create family
-      const { data: familyData, error: familyError } = await supabase
-        .from('families')
-        .insert({ name })
-        .select()
-        .single()
+      const result = await familyService.createFamily(name, user.id, user.role)
       
-      if (familyError) throw familyError
+      if (result.error) {
+        alert(result.error)
+        return null
+      }
       
-      // Update user with family_id
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .update({ family_id: familyData.id })
-        .eq('id', user.id)
-        .select(`
-          *,
-          family:families(*)
-        `)
-        .single()
-      
-      if (userError) throw userError
-      
-      const updatedUser = userData as unknown as User
-      setUser(updatedUser)
-      
-      return familyData as unknown as Family
+      // Refresh user data to include family info
+      await refreshUser()
+      return result.family
     } catch (error) {
       console.error('Error creating family:', error)
       return null
@@ -318,23 +304,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) throw new Error('No user logged in')
     
     try {
-      // Update user with family_id
-      const { data, error } = await supabase
-        .from('users')
-        .update({ family_id: familyId })
-        .eq('id', user.id)
-        .select(`
-          *,
-          family:families(*)
-        `)
-        .single()
+      const result = await familyService.joinFamily(user.id, familyId, user.role)
       
-      if (error) throw error
+      if (result.error) {
+        alert(result.error)
+        return false
+      }
       
-      const updatedUser = data as unknown as User
-      setUser(updatedUser)
-      
-      return true
+      // Refresh user data to include family info
+      await refreshUser()
+      return result.success
     } catch (error) {
       console.error('Error joining family:', error)
       return false
@@ -345,23 +324,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) throw new Error('No user logged in')
     
     try {
-      // Remove family_id from user
-      const { data, error } = await supabase
-        .from('users')
-        .update({ family_id: null })
-        .eq('id', user.id)
-        .select(`
-          *,
-          family:families(*)
-        `)
-        .single()
+      const result = await familyService.leaveFamily(user.id)
       
-      if (error) throw error
+      if (result.error) {
+        alert(result.error)
+        return false
+      }
       
-      const updatedUser = data as unknown as User
-      setUser(updatedUser)
-      
-      return true
+      // Refresh user data to remove family info
+      await refreshUser()
+      return result.success
     } catch (error) {
       console.error('Error leaving family:', error)
       return false
