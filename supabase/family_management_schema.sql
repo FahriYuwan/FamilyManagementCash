@@ -502,7 +502,7 @@ ON CONFLICT DO NOTHING;
 
 -- Enable RLS on all tables
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.families DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.families ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.household_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.household_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
@@ -548,10 +548,6 @@ ON public.families FOR INSERT
 WITH CHECK (
   auth.uid() IS NOT NULL
 );
-
-CREATE POLICY "Allow all insert for testing" 
-ON public.families FOR INSERT 
-WITH CHECK (true);
 
 -- Household categories policies
 CREATE POLICY "Users can view household categories" 

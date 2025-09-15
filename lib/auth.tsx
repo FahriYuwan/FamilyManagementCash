@@ -82,6 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(`Database error querying user: ${userError.message} (Code: ${userError.code})`)
       }
 
+      console.log('✅ User data fetched:', userData)
+
       // If user has a family, fetch the complete family info with all members
       if (userData.family_id) {
         console.log('User belongs to family, fetching complete family data...')
@@ -98,6 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('❌ Family fetch error:', familyError)
           throw new Error(`Database error querying family: ${familyError.message} (Code: ${familyError.code})`)
         }
+
+        console.log('✅ Family data with members fetched:', familyData)
 
         // Combine user data with complete family data
         const completeUserData = {

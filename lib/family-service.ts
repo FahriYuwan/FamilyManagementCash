@@ -27,6 +27,7 @@ export class FamilyService {
       }
 
       console.log('Family data fetched with members:', data);
+      console.log('Members count:', data?.members?.length || 0);
       return data as unknown as Family
     } catch (error) {
       console.error('Exception in getFamilyById:', error)
@@ -227,6 +228,13 @@ export class FamilyService {
         return { success: false, error: 'Failed to join family: ' + error.message }
       }
 
+      // Notify other family members about the new member
+      if (existingMembers && existingMembers.length > 0) {
+        console.log('Notifying existing family members about new member');
+        // In a real implementation, we might use Supabase's broadcast feature or similar
+        // For now, we'll rely on the real-time subscription to pick up the change
+      }
+
       console.log('Successfully joined family')
       return { success: true, error: null }
     } catch (error) {
@@ -300,6 +308,7 @@ export class FamilyService {
   // Subscribe to real-time updates for family members
   subscribeToFamilyMembers(familyId: string, callback: (payload: any) => void) {
     try {
+      console.log('Subscribing to family members changes for family:', familyId);
       const channel = this.supabase
         .channel('family-members-changes')
         .on(

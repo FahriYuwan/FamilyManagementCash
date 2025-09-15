@@ -124,36 +124,50 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user) {
       loadData()
+    }
+  }, [user])
+
+  // Separate effect for family subscription
+  useEffect(() => {
+    // Only set up subscription if user is in a family
+    if (user?.family_id) {
+      console.log('Setting up family subscription for family:', user.family_id);
       
-      // Subscribe to family member changes if user is in a family
-      if (user.family_id) {
-        // Clear any existing subscription
-        if (familySubscriptionRef.current) {
-          familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
+      // Clear any existing subscription
+      if (familySubscriptionRef.current) {
+        console.log('Unsubscribing from previous family subscription');
+        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
+      }
+      
+      // Set up new subscription
+      familySubscriptionRef.current = familyServiceRef.current.subscribeToFamilyMembers(
+        user.family_id,
+        (payload: any) => {
+          console.log('Family member change detected:', payload)
+          // Add a small delay to ensure database is updated
+          setTimeout(async () => {
+            console.log('Refreshing user data after family change');
+            await refreshUser()
+          }, 1500)
         }
-        
-        familySubscriptionRef.current = familyServiceRef.current.subscribeToFamilyMembers(
-          user.family_id,
-          (payload: any) => {
-            console.log('Family member change detected:', payload)
-            // Add a small delay to ensure database is updated
-            setTimeout(async () => {
-              await refreshUser()
-              // Force a re-render by updating state
-              loadData()
-            }, 1500)
-          }
-        )
+      )
+    } else {
+      // User is not in a family, unsubscribe from any previous subscription
+      if (familySubscriptionRef.current) {
+        console.log('User not in family, unsubscribing from family subscription');
+        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
+        familySubscriptionRef.current = null
       }
     }
     
     // Cleanup subscription on unmount
     return () => {
       if (familySubscriptionRef.current) {
+        console.log('Cleaning up family subscription on component unmount');
         familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
       }
     }
-  }, [user])
+  }, [user?.family_id]) // Only re-run when family_id changes
 
   const loadData = async () => {
     try {
