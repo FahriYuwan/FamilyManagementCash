@@ -25,6 +25,7 @@ export class FamilyService {
         return null
       }
 
+      console.log('Family data fetched:', data);
       return data as unknown as Family
     } catch (error) {
       console.error('Exception in getFamilyById:', error)
@@ -148,6 +149,8 @@ export class FamilyService {
 
   async joinFamily(userId: string, familyId: string, userRole: UserRole): Promise<{ success: boolean; error: string | null }> {
     try {
+      console.log('Attempting to join family:', { userId, familyId, userRole })
+      
       // Validate inputs
       if (!userId || !familyId || !userRole) {
         return { success: false, error: 'Invalid parameters: userId, familyId, and userRole are required' }
@@ -207,6 +210,7 @@ export class FamilyService {
       }
 
       // Join the family
+      console.log('Updating user with family_id:', { userId, familyId })
       const { error } = await this.supabase
         .from('users')
         .update({ family_id: familyId })
@@ -220,6 +224,7 @@ export class FamilyService {
         return { success: false, error: 'Failed to join family: ' + error.message }
       }
 
+      console.log('Successfully joined family')
       return { success: true, error: null }
     } catch (error) {
       console.error('Exception in joinFamily:', error)

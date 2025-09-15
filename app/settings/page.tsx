@@ -23,10 +23,12 @@ import {
   Users,
   PlusCircle,
   LogIn,
-  LogOut
+  LogOut,
+  ArrowLeft
 } from 'lucide-react'
 import { HouseholdCategory } from '@/types'
 import { EditHistoryComponent } from '@/components/edit-history'
+import Link from 'next/link'
 
 interface UserPreferences {
   theme: 'light' | 'dark' | 'system'
@@ -135,9 +137,11 @@ export default function SettingsPage() {
           (payload: any) => {
             console.log('Family member change detected:', payload)
             // Add a small delay to ensure database is updated
-            setTimeout(() => {
-              refreshUser()
-            }, 1000)
+            setTimeout(async () => {
+              await refreshUser()
+              // Force a re-render by updating state
+              loadData()
+            }, 1500)
           }
         )
       }
@@ -366,9 +370,22 @@ export default function SettingsPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-2">Manage your preferences and categories</p>
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="md:hidden">
+            <Button variant="outline" size="sm" className="p-2">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href="/dashboard" className="hidden md:block">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
+            <p className="text-gray-600 mt-2">Manage your preferences and categories</p>
+          </div>
         </div>
         <Button onClick={savePreferences} disabled={saving} className="w-full sm:w-auto">
           <Save className="h-4 w-4 mr-2" />

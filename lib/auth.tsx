@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(`Database error querying schema: ${error.message} (Code: ${error.code})`)
       }
       
-      console.log('✅ Profile found:', data)
+      console.log('✅ Profile found with family data:', data)
       return data ? (data as unknown as User) : null
     } catch (error) {
       console.error('❌ Error in getUserProfile:', error)
@@ -326,12 +326,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const refreshUser = async () => {
-    if (!user) return
-    console.log('Refreshing user data...')
+    if (!user) {
+      console.log('No user to refresh')
+      return
+    }
+    console.log('Refreshing user data for user:', user.id)
     const profile = await getUserProfile(user.id)
     if (profile) {
-      console.log('User profile refreshed:', profile)
+      console.log('User profile refreshed with family data:', profile)
       setUser(profile)
+    } else {
+      console.log('Failed to refresh user profile')
     }
   }
 
@@ -365,6 +370,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) throw new Error('No user logged in')
     
     try {
+      console.log('User attempting to join family:', { userId: user.id, familyId, userRole: user.role })
       const result = await familyService.joinFamily(user.id, familyId, user.role)
       
       if (result.error) {
@@ -372,6 +378,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         alert('Error: ' + result.error)
         return false
       }
+      
+      // Add a delay to ensure database is updated before refreshing
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
       // Refresh user data to include family info
       await refreshUser()
