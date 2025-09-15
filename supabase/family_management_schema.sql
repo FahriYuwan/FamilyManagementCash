@@ -168,6 +168,18 @@ CREATE TABLE public.debt_payments (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Edit history tracking
+CREATE TABLE public.edit_history (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  table_name TEXT NOT NULL,
+  record_id UUID NOT NULL,
+  action TEXT NOT NULL CHECK (action IN ('create', 'update', 'delete')),
+  old_values JSONB,
+  new_values JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ====================================================================
 -- STEP 4: CREATE PERFORMANCE INDEXES
 -- ====================================================================
@@ -187,6 +199,11 @@ CREATE INDEX idx_debts_user_id ON public.debts(user_id);
 CREATE INDEX idx_debts_family_id ON public.debts(family_id);
 CREATE INDEX idx_debts_type ON public.debts(type);
 CREATE INDEX idx_debt_payments_debt_id ON public.debt_payments(debt_id);
+CREATE INDEX idx_edit_history_user_id ON public.edit_history(user_id);
+CREATE INDEX idx_edit_history_table_name ON public.edit_history(table_name);
+CREATE INDEX idx_edit_history_record_id ON public.edit_history(record_id);
+CREATE INDEX idx_edit_history_action ON public.edit_history(action);
+CREATE INDEX idx_edit_history_created_at ON public.edit_history(created_at);
 
 -- ====================================================================
 -- STEP 5: CREATE TRIGGER FUNCTIONS
@@ -271,6 +288,27 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to log edits to edit_history table
+CREATE OR REPLACE FUNCTION log_edit()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (TG_OP = 'DELETE') THEN
+    INSERT INTO public.edit_history (user_id, table_name, record_id, action, old_values)
+    VALUES (auth.uid(), TG_TABLE_NAME, OLD.id, 'delete', row_to_json(OLD));
+    RETURN OLD;
+  ELSIF (TG_OP = 'UPDATE') THEN
+    INSERT INTO public.edit_history (user_id, table_name, record_id, action, old_values, new_values)
+    VALUES (auth.uid(), TG_TABLE_NAME, NEW.id, 'update', row_to_json(OLD), row_to_json(NEW));
+    RETURN NEW;
+  ELSIF (TG_OP = 'INSERT') THEN
+    INSERT INTO public.edit_history (user_id, table_name, record_id, action, new_values)
+    VALUES (auth.uid(), TG_TABLE_NAME, NEW.id, 'create', row_to_json(NEW));
+    RETURN NEW;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to handle new user registration with proper error handling
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
@@ -381,6 +419,27 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW 
   EXECUTE FUNCTION public.handle_new_user();
+
+-- Triggers to log edits
+CREATE TRIGGER log_household_transactions_edit
+  AFTER INSERT OR UPDATE OR DELETE ON public.household_transactions
+  FOR EACH ROW EXECUTE FUNCTION log_edit();
+
+CREATE TRIGGER log_orders_edit
+  AFTER INSERT OR UPDATE OR DELETE ON public.orders
+  FOR EACH ROW EXECUTE FUNCTION log_edit();
+
+CREATE TRIGGER log_order_expenses_edit
+  AFTER INSERT OR UPDATE OR DELETE ON public.order_expenses
+  FOR EACH ROW EXECUTE FUNCTION log_edit();
+
+CREATE TRIGGER log_debts_edit
+  AFTER INSERT OR UPDATE OR DELETE ON public.debts
+  FOR EACH ROW EXECUTE FUNCTION log_edit();
+
+CREATE TRIGGER log_debt_payments_edit
+  AFTER INSERT OR UPDATE OR DELETE ON public.debt_payments
+  FOR EACH ROW EXECUTE FUNCTION log_edit();
 
 -- ====================================================================
 -- STEP 7: SYNC EXISTING AUTH USERS
@@ -678,6 +737,44 @@ USING (
   EXISTS (
     SELECT 1 FROM public.debts d 
     WHERE d.id = debt_id AND d.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Users can delete debt payments" 
+ON public.debt_payments FOR DELETE 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.debts d 
+    WHERE d.id = debt_id AND d.user_id = auth.uid()
+  )
+);
+
+-- Edit history policies
+CREATE POLICY "Users can view own edit history" 
+ON public.edit_history FOR SELECT 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Family members can view edit history" 
+ON public.edit_history FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.users u1 
+    JOIN public.users u2 ON u1.family_id = u2.family_id 
+    WHERE u1.id = user_id AND u2.id = auth.uid() AND u1.family_id IS NOT NULL
+  )
+);
+
+CREATE POLICY "Users can insert edit history" 
+ON public.edit_history FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own edit history" 
+ON public.edit_history FOR UPDATE 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own edit history" 
+ON public.edit_history FOR DELETE 
+USING (auth.uid() = user_id);
   )
 );
 

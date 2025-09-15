@@ -391,3 +391,16 @@ export const DEBT_TYPE_OPTIONS = [
   { value: 'receivable', label: 'Piutang' },
   { value: 'payable', label: 'Hutang' }
 ] as const
+
+// Edit History Types
+export interface EditHistory {
+  id: string
+  user_id: string
+  user?: User
+  table_name: string
+  record_id: string
+  action: 'create' | 'update' | 'delete'
+  old_values?: any
+  new_values?: any
+  created_at: string
+}

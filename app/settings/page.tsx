@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/lib/auth'
 import { HouseholdService } from '@/lib/household-service'
+import { FamilyService } from '@/lib/family-service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -25,6 +26,7 @@ import {
   LogOut
 } from 'lucide-react'
 import { HouseholdCategory } from '@/types'
+import { EditHistoryComponent } from '@/components/edit-history'
 
 interface UserPreferences {
   theme: 'light' | 'dark' | 'system'
@@ -79,7 +81,7 @@ const COLOR_OPTIONS = [
 ]
 
 export default function SettingsPage() {
-  const { user, loading, createFamily, joinFamily, leaveFamily } = useAuth()
+  const { user, loading, createFamily, joinFamily, leaveFamily, refreshUser } = useAuth()
   const [categories, setCategories] = useState<HouseholdCategory[]>([])
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: 'light',
@@ -112,10 +114,33 @@ export default function SettingsPage() {
   const [newFamilyName, setNewFamilyName] = useState('')
   const [joinFamilyId, setJoinFamilyId] = useState('')
   const [familyOperationLoading, setFamilyOperationLoading] = useState(false)
+  
+  // Real-time subscription
+  const familySubscriptionRef = useRef<any>(null)
+  const familyServiceRef = useRef<FamilyService>(new FamilyService())
 
   useEffect(() => {
     if (user) {
       loadData()
+      
+      // Subscribe to family member changes if user is in a family
+      if (user.family_id) {
+        familySubscriptionRef.current = familyServiceRef.current.subscribeToFamilyMembers(
+          user.family_id,
+          (payload: any) => {
+            console.log('Family member change detected:', payload)
+            // Refresh user data when family members change
+            refreshUser()
+          }
+        )
+      }
+    }
+    
+    // Cleanup subscription on unmount
+    return () => {
+      if (familySubscriptionRef.current) {
+        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
+      }
     }
   }, [user])
 
@@ -234,7 +259,18 @@ export default function SettingsPage() {
         alert('Family created successfully!')
         setNewFamilyName('')
         setShowCreateFamilyForm(false)
-        await loadData() // Refresh data to show family info
+        // Refresh data to show family info
+        await refreshUser()
+        // Set up real-time subscription for the new family
+        if (family.id) {
+          familySubscriptionRef.current = familyServiceRef.current.subscribeToFamilyMembers(
+            family.id,
+            (payload: any) => {
+              console.log('Family member change detected:', payload)
+              refreshUser()
+            }
+          )
+        }
       } else {
         // Error message is now handled in the auth service
       }
@@ -259,7 +295,18 @@ export default function SettingsPage() {
         alert('Joined family successfully!')
         setJoinFamilyId('')
         setShowJoinFamilyForm(false)
-        await loadData() // Refresh data to show family info
+        // Refresh data to show family info
+        await refreshUser()
+        // Set up real-time subscription for the joined family
+        if (user?.family_id) {
+          familySubscriptionRef.current = familyServiceRef.current.subscribeToFamilyMembers(
+            user.family_id,
+            (payload: any) => {
+              console.log('Family member change detected:', payload)
+              refreshUser()
+            }
+          )
+        }
       } else {
         alert('Error joining family')
       }
@@ -276,10 +323,16 @@ export default function SettingsPage() {
     
     try {
       setFamilyOperationLoading(true)
+      // Unsubscribe from family updates before leaving
+      if (familySubscriptionRef.current) {
+        familyServiceRef.current.unsubscribeFromFamilyMembers(familySubscriptionRef.current)
+        familySubscriptionRef.current = null
+      }
+      
       const success = await leaveFamily()
       if (success) {
         alert('Left family successfully!')
-        await loadData() // Refresh data to show updated family info
+        await refreshUser() // Refresh data to show updated family info
       } else {
         alert('Error leaving family')
       }
@@ -500,8 +553,35 @@ export default function SettingsPage() {
                   <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                     <h3 className="font-medium text-blue-900">Current Family</h3>
                     <p className="text-blue-700 mt-1">You are currently a member of family: {user.family?.name}</p>
+                    <p className="text-sm text-blue-600 mt-2">{user.family?.members?.length || 0} member{user.family?.members?.length !== 1 ? 's' : ''}</p>
                     <p className="text-sm text-blue-600 mt-2">Family ID: {user.family_id}</p>
                   </div>
+                  
+                  {/* Family Members List */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-medium text-gray-900 mb-3">Family Members</h4>
+                    <div className="space-y-2">
+                      {user.family?.members?.map((member: any) => (
+                        <div key={member.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                              <User className="h-4 w-4 text-primary-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{member.name}</p>
+                              <p className="text-xs text-gray-500 capitalize">{member.role}</p>
+                            </div>
+                          </div>
+                          {member.id === user.id && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">You</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Edit History */}
+                  <EditHistoryComponent familyId={user.family_id} />
                   
                   <Button 
                     onClick={handleLeaveFamily} 
