@@ -179,6 +179,15 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
+### Database Setup
+
+After setting up your Supabase project, run the database schema:
+
+```sql
+-- Run the main schema
+supabase/family_management_schema.sql
+```
+
 ## 📖 Skenario Penggunaan
 
 1. **Ibu ingin tahu pengeluaran minggu ini** → lihat pie chart berdasarkan kategori
@@ -187,6 +196,30 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 4. **Keluarga ingin diskusi bulanan** → ekspor laporan ke PDF/Excel
 5. **Ibu dan Ayah ingin melihat keuangan keluarga secara keseluruhan** → bergabung dalam grup keluarga → lihat dashboard konsolidasi
 6. **Saat Ayah menambahkan transaksi baru, Ibu langsung dapat melihatnya** → data diperbarui secara real-time
+
+## 🛠️ Troubleshooting
+
+If you encounter issues with the application:
+
+1. **Family Creation Fails with 403 Forbidden Error**
+   - Re-run the main schema file: `supabase/family_management_schema.sql`
+   - As a temporary workaround, you can disable RLS with: `ALTER TABLE public.families DISABLE ROW LEVEL SECURITY;`
+
+2. **Family Members Cannot See Each Other**
+   - Re-run the main schema file: `supabase/family_management_schema.sql`
+
+3. **Authentication Issues**
+   - Verify environment variables are set correctly
+   - Check Supabase Auth settings
+
+4. **Real-time Sync Issues**
+   - Ensure family members have proper family_id relationships
+   - Check database triggers and RLS policies
+
+## 📚 Additional Documentation
+
+- [DEPLOYMENT_CHECKLIST.md](file:///D:/File%20Fahri/File%20Kuliah/Semester%207/PKL/Try_Qoder/FamilyManagementCash/DEPLOYMENT_CHECKLIST.md) - Complete deployment guide
+- [PRODUCTION_FIXES.md](file:///D:/File%20Fahri/File%20Kuliah/Semester%207/PKL/Try_Qoder/FamilyManagementCash/PRODUCTION_FIXES.md) - Production fixes and improvements
 
 ## 🤝 Contributing
 

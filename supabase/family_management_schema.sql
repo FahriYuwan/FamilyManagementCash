@@ -174,6 +174,7 @@ CREATE TABLE public.edit_history (
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
   table_name TEXT NOT NULL,
   record_id UUID NOT NULL,
+  family_id UUID REFERENCES public.families(id) ON DELETE CASCADE,
   action TEXT NOT NULL CHECK (action IN ('create', 'update', 'delete')),
   old_values JSONB,
   new_values JSONB,
@@ -190,10 +191,12 @@ CREATE INDEX idx_household_transactions_user_id ON public.household_transactions
 CREATE INDEX idx_household_transactions_family_id ON public.household_transactions(family_id);
 CREATE INDEX idx_household_transactions_date ON public.household_transactions(date);
 CREATE INDEX idx_household_transactions_type ON public.household_transactions(type);
+CREATE INDEX idx_household_transactions_family_date ON public.household_transactions(family_id, date);
 CREATE INDEX idx_orders_user_id ON public.orders(user_id);
 CREATE INDEX idx_orders_family_id ON public.orders(family_id);
 CREATE INDEX idx_orders_status ON public.orders(status);
 CREATE INDEX idx_orders_date ON public.orders(order_date);
+CREATE INDEX idx_orders_family_date ON public.orders(family_id, order_date);
 CREATE INDEX idx_order_expenses_order_id ON public.order_expenses(order_id);
 CREATE INDEX idx_debts_user_id ON public.debts(user_id);
 CREATE INDEX idx_debts_family_id ON public.debts(family_id);
@@ -202,6 +205,7 @@ CREATE INDEX idx_debt_payments_debt_id ON public.debt_payments(debt_id);
 CREATE INDEX idx_edit_history_user_id ON public.edit_history(user_id);
 CREATE INDEX idx_edit_history_table_name ON public.edit_history(table_name);
 CREATE INDEX idx_edit_history_record_id ON public.edit_history(record_id);
+CREATE INDEX idx_edit_history_family_id ON public.edit_history(family_id);
 CREATE INDEX idx_edit_history_action ON public.edit_history(action);
 CREATE INDEX idx_edit_history_created_at ON public.edit_history(created_at);
 
@@ -227,6 +231,12 @@ BEGIN
     FROM public.users
     WHERE id = NEW.user_id;
   END IF;
+  
+  -- Ensure family_id is always set for consistency
+  IF NEW.user_id IS NOT NULL AND NEW.family_id IS NULL THEN
+    RAISE WARNING 'Could not set family_id for record in %.user_id: %', TG_TABLE_NAME, NEW.user_id;
+  END IF;
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -292,18 +302,45 @@ $$ LANGUAGE plpgsql;
 -- Function to log edits to edit_history table
 CREATE OR REPLACE FUNCTION log_edit()
 RETURNS TRIGGER AS $$
+DECLARE
+  current_user_id UUID;
+  current_family_id UUID;
 BEGIN
+  -- Get current user ID with fallback
+  current_user_id := COALESCE(auth.uid(), NEW.user_id, OLD.user_id);
+  
+  -- Get family ID from the record being modified
+  IF TG_TABLE_NAME = 'users' THEN
+    SELECT family_id INTO current_family_id FROM public.users WHERE id = COALESCE(NEW.id, OLD.id);
+  ELSIF TG_TABLE_NAME = 'household_transactions' THEN
+    SELECT family_id INTO current_family_id FROM public.household_transactions WHERE id = COALESCE(NEW.id, OLD.id);
+  ELSIF TG_TABLE_NAME = 'orders' THEN
+    SELECT family_id INTO current_family_id FROM public.orders WHERE id = COALESCE(NEW.id, OLD.id);
+  ELSIF TG_TABLE_NAME = 'debts' THEN
+    SELECT family_id INTO current_family_id FROM public.debts WHERE id = COALESCE(NEW.id, OLD.id);
+  ELSIF TG_TABLE_NAME = 'order_expenses' THEN
+    SELECT o.family_id INTO current_family_id 
+    FROM public.order_expenses oe 
+    JOIN public.orders o ON oe.order_id = o.id 
+    WHERE oe.id = COALESCE(NEW.id, OLD.id);
+  ELSIF TG_TABLE_NAME = 'debt_payments' THEN
+    SELECT d.family_id INTO current_family_id 
+    FROM public.debt_payments dp 
+    JOIN public.debts d ON dp.debt_id = d.id 
+    WHERE dp.id = COALESCE(NEW.id, OLD.id);
+  END IF;
+  
   IF (TG_OP = 'DELETE') THEN
-    INSERT INTO public.edit_history (user_id, table_name, record_id, action, old_values)
-    VALUES (auth.uid(), TG_TABLE_NAME, OLD.id, 'delete', row_to_json(OLD));
+    INSERT INTO public.edit_history (user_id, table_name, record_id, family_id, action, old_values)
+    VALUES (current_user_id, TG_TABLE_NAME, OLD.id, current_family_id, 'delete', row_to_json(OLD));
     RETURN OLD;
   ELSIF (TG_OP = 'UPDATE') THEN
-    INSERT INTO public.edit_history (user_id, table_name, record_id, action, old_values, new_values)
-    VALUES (auth.uid(), TG_TABLE_NAME, NEW.id, 'update', row_to_json(OLD), row_to_json(NEW));
+    INSERT INTO public.edit_history (user_id, table_name, record_id, family_id, action, old_values, new_values)
+    VALUES (current_user_id, TG_TABLE_NAME, NEW.id, current_family_id, 'update', row_to_json(OLD), row_to_json(NEW));
     RETURN NEW;
   ELSIF (TG_OP = 'INSERT') THEN
-    INSERT INTO public.edit_history (user_id, table_name, record_id, action, new_values)
-    VALUES (auth.uid(), TG_TABLE_NAME, NEW.id, 'create', row_to_json(NEW));
+    INSERT INTO public.edit_history (user_id, table_name, record_id, family_id, action, new_values)
+    VALUES (current_user_id, TG_TABLE_NAME, NEW.id, current_family_id, 'create', row_to_json(NEW));
     RETURN NEW;
   END IF;
   RETURN NULL;
@@ -332,7 +369,6 @@ BEGIN
       ),
       CASE 
         WHEN NEW.raw_user_meta_data->>'role' = 'ayah' THEN 'ayah'::user_role
-        WHEN NEW.email LIKE '%ayah%' THEN 'ayah'::user_role
         ELSE 'ibu'::user_role
       END
     );
@@ -458,7 +494,6 @@ SELECT
   ) as name,
   CASE 
     WHEN raw_user_meta_data->>'role' = 'ayah' THEN 'ayah'::user_role
-    WHEN email LIKE '%ayah%' THEN 'ayah'::user_role
     ELSE 'ibu'::user_role
   END as role
 FROM auth.users 
@@ -521,6 +556,18 @@ ALTER TABLE public.order_expense_categories DISABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" 
 ON public.users FOR SELECT 
 USING (auth.uid() = id);
+
+CREATE POLICY "Family members can view each other" 
+ON public.users FOR SELECT 
+USING (
+  family_id IS NOT NULL AND
+  family_id = (
+    SELECT family_id 
+    FROM public.users 
+    WHERE id = auth.uid() 
+    AND family_id IS NOT NULL
+  )
+);
 
 CREATE POLICY "Users can update own profile" 
 ON public.users FOR UPDATE 
@@ -601,19 +648,19 @@ USING (
   family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
 );
 
--- Orders policies (ayah role only)
+-- Orders policies (ayah role only for write operations)
 CREATE POLICY "Ayah can view orders" 
 ON public.orders FOR SELECT 
 USING (
-  auth.uid() = user_id AND 
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+  auth.uid() = user_id OR
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
 );
 
+-- Family members can view orders regardless of role
 CREATE POLICY "Family members can view orders" 
 ON public.orders FOR SELECT 
 USING (
-  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL) AND
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
 );
 
 CREATE POLICY "Ayah can insert orders" 
@@ -659,18 +706,21 @@ USING (
   EXISTS (
     SELECT 1 FROM public.orders o 
     WHERE o.id = order_id AND o.user_id = auth.uid()
-  ) AND
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+  ) OR
+  EXISTS (
+    SELECT 1 FROM public.orders o 
+    WHERE o.id = order_id AND o.family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+  )
 );
 
+-- Family members can view order expenses regardless of role
 CREATE POLICY "Family members can view order expenses" 
 ON public.order_expenses FOR SELECT 
 USING (
   EXISTS (
     SELECT 1 FROM public.orders o 
     WHERE o.id = order_id AND o.family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
-  ) AND
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+  )
 );
 
 CREATE POLICY "Ayah can insert order expenses" 

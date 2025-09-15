@@ -25,6 +25,7 @@
 - Fixed duplicate policy definitions
 - Corrected syntax errors in RLS policies
 - Ensured proper policy naming conventions
+- Resolved conflicting RLS policies on families table that prevented family creation
 
 ## 🛠️ Deployment Checklist
 
@@ -73,6 +74,10 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.com
 1. Verify database schema is up to date
 2. Check RLS policies in Supabase dashboard
 3. Ensure user has proper role assignments
+4. Check for conflicting policies on the same table (particularly families table)
+5. Ensure only one INSERT policy exists for the families table if family creation fails with 403 error
+6. Re-run the main schema file: `supabase/family_management_schema.sql`
+7. As a temporary workaround, disable RLS with: `ALTER TABLE public.families DISABLE ROW LEVEL SECURITY;`
 
 ### 🔴 Real-time Updates Not Working
 **Symptoms**: Family member counts not updating, delayed updates
