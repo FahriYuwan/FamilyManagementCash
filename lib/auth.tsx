@@ -283,6 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const createFamily = async (name: string): Promise<Family | null> => {
     if (!user) throw new Error('No user logged in')
     
+    console.log('Creating family with user:', user);
     try {
       const result = await familyService.createFamily(name, user.id, user.role)
       
@@ -295,9 +296,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Refresh user data to include family info
       await refreshUser()
       return result.family
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating family:', error)
-      alert('Error creating family: ' + (error as Error).message)
+      const errorMessage = error.message || error.toString()
+      alert('Error creating family: ' + errorMessage)
       return null
     }
   }

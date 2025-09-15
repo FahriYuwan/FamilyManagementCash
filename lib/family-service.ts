@@ -41,6 +41,8 @@ export class FamilyService {
 
   async createFamily(name: string, creatorId: string, creatorRole: UserRole): Promise<{ family: Family | null; error: string | null }> {
     try {
+      console.log('Creating family with parameters:', { name, creatorId, creatorRole });
+      
       // Check if user is already in a family
       const { data: existingUser, error: userCheckError } = await this.supabase
         .from('users')
@@ -58,19 +60,24 @@ export class FamilyService {
       }
 
       // Create the family
+      console.log('Attempting to create family with name:', name);
       const { data: family, error: familyError } = await this.supabase
         .from('families')
-        .insert({ name })
+        .insert([{ name }])
         .select()
         .single()
 
       if (familyError) {
         console.error('Error creating family:', familyError)
-        if (familyError.code === '42501' || familyError.message.includes('permission')) {
+        console.error('Error code:', familyError.code)
+        console.error('Error message:', familyError.message)
+        if (familyError.code === '42501' || familyError.message.includes('permission') || familyError.message.includes('403')) {
           return { family: null, error: 'Insufficient permissions to create family. Please check your account permissions.' }
         }
         return { family: null, error: 'Failed to create family: ' + familyError.message }
       }
+      
+      console.log('Family created successfully:', family);
 
       // Update the creator's family_id
       const { error: userError } = await this.supabase
@@ -82,7 +89,7 @@ export class FamilyService {
         console.error('Error updating user with family ID:', userError)
         // Try to clean up the created family since we couldn't assign the user to it
         await this.supabase.from('families').delete().eq('id', family.id)
-        if (userError.code === '42501') {
+        if (userError.code === '42501' || userError.message.includes('permission') || userError.message.includes('403')) {
           return { family: null, error: 'Insufficient permissions to join family' }
         }
         return { family: null, error: 'Failed to join family: ' + userError.message }
@@ -160,7 +167,7 @@ export class FamilyService {
 
       if (error) {
         console.error('Error joining family:', error)
-        if (error.code === '42501') {
+        if (error.code === '42501' || error.message.includes('permission') || error.message.includes('403')) {
           return { success: false, error: 'Insufficient permissions to join family' }
         }
         return { success: false, error: 'Failed to join family: ' + error.message }
@@ -182,7 +189,7 @@ export class FamilyService {
 
       if (error) {
         console.error('Error leaving family:', error)
-        if (error.code === '42501') {
+        if (error.code === '42501' || error.message.includes('permission') || error.message.includes('403')) {
           return { success: false, error: 'Insufficient permissions to leave family' }
         }
         return { success: false, error: 'Failed to leave family: ' + error.message }

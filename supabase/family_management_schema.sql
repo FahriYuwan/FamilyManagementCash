@@ -496,6 +496,12 @@ WITH CHECK (
   auth.uid() IS NOT NULL
 );
 
+CREATE POLICY "Authenticated users can create families" 
+ON public.families FOR INSERT 
+WITH CHECK (
+  auth.uid() IS NOT NULL
+);
+
 -- Household categories policies
 CREATE POLICY "Users can view household categories" 
 ON public.household_categories FOR SELECT 
