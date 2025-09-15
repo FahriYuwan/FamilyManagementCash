@@ -167,6 +167,11 @@ export default function SettingsPage() {
       if (savedPreferences) {
         setPreferences(JSON.parse(savedPreferences))
       }
+      
+      // Log family data for debugging
+      if (user?.family) {
+        console.log('Current user family data:', user.family)
+      }
     } catch (error) {
       console.error('Error loading settings data:', error)
     } finally {

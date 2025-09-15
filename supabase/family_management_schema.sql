@@ -589,9 +589,21 @@ CREATE POLICY "Users can update own household transactions"
 ON public.household_transactions FOR UPDATE 
 USING (auth.uid() = user_id);
 
+CREATE POLICY "Family members can update household transactions" 
+ON public.household_transactions FOR UPDATE 
+USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+);
+
 CREATE POLICY "Users can delete own household transactions" 
 ON public.household_transactions FOR DELETE 
 USING (auth.uid() = user_id);
+
+CREATE POLICY "Family members can delete household transactions" 
+ON public.household_transactions FOR DELETE 
+USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+);
 
 -- Orders policies (ayah role only)
 CREATE POLICY "Ayah can view orders" 
@@ -626,6 +638,21 @@ CREATE POLICY "Ayah can delete orders"
 ON public.orders FOR DELETE 
 USING (
   auth.uid() = user_id AND 
+  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+);
+
+-- Family members can update and delete orders
+CREATE POLICY "Family members can update orders" 
+ON public.orders FOR UPDATE 
+USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL) AND
+  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+);
+
+CREATE POLICY "Family members can delete orders" 
+ON public.orders FOR DELETE 
+USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL) AND
   EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
 );
 
@@ -680,6 +707,27 @@ USING (
   EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
 );
 
+-- Family members can update and delete order expenses
+CREATE POLICY "Family members can update order expenses" 
+ON public.order_expenses FOR UPDATE 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.orders o 
+    WHERE o.id = order_id AND o.family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+  ) AND
+  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+);
+
+CREATE POLICY "Family members can delete order expenses" 
+ON public.order_expenses FOR DELETE 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.orders o 
+    WHERE o.id = order_id AND o.family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+  ) AND
+  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+);
+
 -- Debts policies
 CREATE POLICY "Users can view own debts" 
 ON public.debts FOR SELECT 
@@ -702,6 +750,19 @@ USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own debts" 
 ON public.debts FOR DELETE 
 USING (auth.uid() = user_id);
+
+-- Family members can update and delete debts
+CREATE POLICY "Family members can update debts" 
+ON public.debts FOR UPDATE 
+USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+);
+
+CREATE POLICY "Family members can delete debts" 
+ON public.debts FOR DELETE 
+USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+);
 
 -- Debt payments policies
 CREATE POLICY "Users can view debt payments" 
@@ -746,6 +807,25 @@ USING (
   EXISTS (
     SELECT 1 FROM public.debts d 
     WHERE d.id = debt_id AND d.user_id = auth.uid()
+  )
+);
+
+-- Family members can update and delete debt payments
+CREATE POLICY "Family members can update debt payments" 
+ON public.debt_payments FOR UPDATE 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.debts d 
+    WHERE d.id = debt_id AND d.family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+  )
+);
+
+CREATE POLICY "Family members can delete debt payments" 
+ON public.debt_payments FOR DELETE 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.debts d 
+    WHERE d.id = debt_id AND d.family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
   )
 );
 

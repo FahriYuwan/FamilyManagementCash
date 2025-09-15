@@ -11,6 +11,7 @@ export class FamilyService {
 
   async getFamilyById(familyId: string): Promise<Family | null> {
     try {
+      console.log('Fetching family by ID:', familyId);
       const { data, error } = await this.supabase
         .from('families')
         .select(`
@@ -25,7 +26,7 @@ export class FamilyService {
         return null
       }
 
-      console.log('Family data fetched:', data);
+      console.log('Family data fetched with members:', data);
       return data as unknown as Family
     } catch (error) {
       console.error('Exception in getFamilyById:', error)
@@ -35,6 +36,7 @@ export class FamilyService {
 
   async getFamilyByUserId(userId: string): Promise<Family | null> {
     try {
+      console.log('Fetching family by user ID:', userId);
       // First get the user's family_id
       const { data: user, error: userError } = await this.supabase
         .from('users')
@@ -43,6 +45,7 @@ export class FamilyService {
         .single()
 
       if (userError || !user?.family_id) {
+        console.log('User not in family or error:', { userError, familyId: user?.family_id });
         return null
       }
 

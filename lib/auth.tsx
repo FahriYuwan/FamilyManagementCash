@@ -66,36 +66,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('✅ Users table accessible, attempting to fetch profile...')
       
-      // Fetch profile with family information including all family members
-      const profilePromise = supabase
+      // First, get the user's basic info and family_id
+      const { data: userData, error: userError } = await supabase
         .from('users')
-        .select(`
-          *,
-          family:families(
-            *,
-            members:users(*)
-          )
-        `)
+        .select('*')
         .eq('id', userId)
         .single()
-      
-      const profileTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-      )
 
-      const { data, error } = await Promise.race([profilePromise, profileTimeoutPromise]) as any
-
-      if (error) {
-        console.error('❌ Profile fetch error:', error)
-        if (error.code === 'PGRST116') {
+      if (userError) {
+        console.error('❌ User fetch error:', userError)
+        if (userError.code === 'PGRST116') {
           console.log('📝 User not found in users table, attempting to create from auth data...')
           return await createUserProfileFromAuth(userId)
         }
-        throw new Error(`Database error querying schema: ${error.message} (Code: ${error.code})`)
+        throw new Error(`Database error querying user: ${userError.message} (Code: ${userError.code})`)
       }
-      
-      console.log('✅ Profile found with family data:', data)
-      return data ? (data as unknown as User) : null
+
+      // If user has a family, fetch the complete family info with all members
+      if (userData.family_id) {
+        console.log('User belongs to family, fetching complete family data...')
+        const { data: familyData, error: familyError } = await supabase
+          .from('families')
+          .select(`
+            *,
+            members:users(*)
+          `)
+          .eq('id', userData.family_id)
+          .single()
+
+        if (familyError) {
+          console.error('❌ Family fetch error:', familyError)
+          throw new Error(`Database error querying family: ${familyError.message} (Code: ${familyError.code})`)
+        }
+
+        // Combine user data with complete family data
+        const completeUserData = {
+          ...userData,
+          family: familyData
+        }
+
+        console.log('✅ Profile found with complete family data:', completeUserData)
+        return completeUserData as unknown as User
+      } else {
+        // User has no family, return basic user data
+        const userDataWithoutFamily = {
+          ...userData,
+          family: null
+        }
+        
+        console.log('✅ Profile found without family:', userDataWithoutFamily)
+        return userDataWithoutFamily as unknown as User
+      }
     } catch (error) {
       console.error('❌ Error in getUserProfile:', error)
       return null
