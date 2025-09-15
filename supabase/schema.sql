@@ -1,4 +1,4 @@
--- FamilyManagementCash Database Schema
+-- FamilyManagementCash Database Schema with Family Synchronization
 -- Run this in Supabase SQL Editor
 
 -- Enable necessary extensions
@@ -10,6 +10,14 @@ CREATE TYPE transaction_type AS ENUM ('income', 'expense');
 CREATE TYPE debt_type AS ENUM ('receivable', 'payable');
 CREATE TYPE order_status AS ENUM ('pending', 'in_progress', 'completed', 'cancelled');
 
+-- Family groups table
+CREATE TABLE public.families (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  name TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Users table (extends Supabase auth.users)
 CREATE TABLE public.users (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
@@ -17,6 +25,7 @@ CREATE TABLE public.users (
   name TEXT NOT NULL,
   role user_role NOT NULL DEFAULT 'ibu',
   avatar_url TEXT,
+  family_id UUID REFERENCES public.families(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -44,7 +53,8 @@ CREATE TABLE public.household_transactions (
   date DATE NOT NULL DEFAULT CURRENT_DATE,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  family_id UUID REFERENCES public.families(id) ON DELETE CASCADE
 );
 
 -- Garment business orders
@@ -64,7 +74,8 @@ CREATE TABLE public.orders (
   completion_date DATE,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  family_id UUID REFERENCES public.families(id) ON DELETE CASCADE
 );
 
 -- Order expense categories
@@ -100,7 +111,8 @@ CREATE TABLE public.debts (
   due_date DATE,
   is_settled BOOLEAN GENERATED ALWAYS AS (paid_amount >= amount) STORED,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  family_id UUID REFERENCES public.families(id) ON DELETE CASCADE
 );
 
 -- Debt payments tracking
@@ -133,15 +145,19 @@ INSERT INTO public.order_expense_categories (name, description) VALUES
 
 -- Create indexes for better performance
 CREATE INDEX idx_household_transactions_user_id ON public.household_transactions(user_id);
+CREATE INDEX idx_household_transactions_family_id ON public.household_transactions(family_id);
 CREATE INDEX idx_household_transactions_date ON public.household_transactions(date);
 CREATE INDEX idx_household_transactions_type ON public.household_transactions(type);
 CREATE INDEX idx_orders_user_id ON public.orders(user_id);
+CREATE INDEX idx_orders_family_id ON public.orders(family_id);
 CREATE INDEX idx_orders_status ON public.orders(status);
 CREATE INDEX idx_orders_date ON public.orders(order_date);
 CREATE INDEX idx_order_expenses_order_id ON public.order_expenses(order_id);
 CREATE INDEX idx_debts_user_id ON public.debts(user_id);
+CREATE INDEX idx_debts_family_id ON public.debts(family_id);
 CREATE INDEX idx_debts_type ON public.debts(type);
 CREATE INDEX idx_debt_payments_debt_id ON public.debt_payments(debt_id);
+CREATE INDEX idx_users_family_id ON public.users(family_id);
 
 -- Create updated_at triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -158,9 +174,11 @@ CREATE TRIGGER update_household_transactions_updated_at BEFORE UPDATE ON public.
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 CREATE TRIGGER update_order_expenses_updated_at BEFORE UPDATE ON public.order_expenses FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 CREATE TRIGGER update_debts_updated_at BEFORE UPDATE ON public.debts FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+CREATE TRIGGER update_families_updated_at BEFORE UPDATE ON public.families FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
 -- Row Level Security (RLS) policies
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.families ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.household_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.household_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
@@ -172,6 +190,14 @@ ALTER TABLE public.debt_payments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON public.users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
 
+-- Families policies
+CREATE POLICY "Family members can view family" ON public.families FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.users WHERE family_id = families.id AND id = auth.uid())
+);
+CREATE POLICY "Family members can update family" ON public.families FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM public.users WHERE family_id = families.id AND id = auth.uid())
+);
+
 -- Household categories policies
 CREATE POLICY "Users can view household categories" ON public.household_categories FOR SELECT USING (
   is_default = true OR user_id = auth.uid()
@@ -182,6 +208,9 @@ CREATE POLICY "Users can delete own household categories" ON public.household_ca
 
 -- Household transactions policies
 CREATE POLICY "Users can view own household transactions" ON public.household_transactions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Family members can view household transactions" ON public.household_transactions FOR SELECT USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+);
 CREATE POLICY "Users can insert household transactions" ON public.household_transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own household transactions" ON public.household_transactions FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own household transactions" ON public.household_transactions FOR DELETE USING (auth.uid() = user_id);
@@ -189,6 +218,10 @@ CREATE POLICY "Users can delete own household transactions" ON public.household_
 -- Orders policies (only 'ayah' role can access)
 CREATE POLICY "Ayah can view orders" ON public.orders FOR SELECT USING (
   auth.uid() = user_id AND 
+  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+);
+CREATE POLICY "Family members can view orders" ON public.orders FOR SELECT USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL) AND
   EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
 );
 CREATE POLICY "Ayah can insert orders" ON public.orders FOR INSERT WITH CHECK (
@@ -209,6 +242,10 @@ CREATE POLICY "Ayah can view order expenses" ON public.order_expenses FOR SELECT
   EXISTS (SELECT 1 FROM public.orders WHERE id = order_id AND user_id = auth.uid()) AND
   EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
 );
+CREATE POLICY "Family members can view order expenses" ON public.order_expenses FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.orders WHERE id = order_id AND family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)) AND
+  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
+);
 CREATE POLICY "Ayah can insert order expenses" ON public.order_expenses FOR INSERT WITH CHECK (
   EXISTS (SELECT 1 FROM public.orders WHERE id = order_id AND user_id = auth.uid()) AND
   EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ayah')
@@ -224,6 +261,9 @@ CREATE POLICY "Ayah can delete order expenses" ON public.order_expenses FOR DELE
 
 -- Debts policies
 CREATE POLICY "Users can view own debts" ON public.debts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Family members can view debts" ON public.debts FOR SELECT USING (
+  family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL)
+);
 CREATE POLICY "Users can insert debts" ON public.debts FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own debts" ON public.debts FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own debts" ON public.debts FOR DELETE USING (auth.uid() = user_id);
@@ -231,6 +271,9 @@ CREATE POLICY "Users can delete own debts" ON public.debts FOR DELETE USING (aut
 -- Debt payments policies
 CREATE POLICY "Users can view debt payments" ON public.debt_payments FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.debts WHERE id = debt_id AND user_id = auth.uid())
+);
+CREATE POLICY "Family members can view debt payments" ON public.debt_payments FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.debts WHERE id = debt_id AND family_id IN (SELECT family_id FROM public.users WHERE id = auth.uid() AND family_id IS NOT NULL))
 );
 CREATE POLICY "Users can insert debt payments" ON public.debt_payments FOR INSERT WITH CHECK (
   EXISTS (SELECT 1 FROM public.debts WHERE id = debt_id AND user_id = auth.uid())
@@ -293,3 +336,29 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER debt_payment_trigger
   AFTER INSERT OR UPDATE OR DELETE ON public.debt_payments
   FOR EACH ROW EXECUTE PROCEDURE update_debt_paid_amount();
+
+-- Function to automatically set family_id on insert for transactions, orders, and debts
+CREATE OR REPLACE FUNCTION set_family_id()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.user_id IS NOT NULL AND NEW.family_id IS NULL THEN
+    SELECT family_id INTO NEW.family_id
+    FROM public.users
+    WHERE id = NEW.user_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Triggers to automatically set family_id
+CREATE TRIGGER set_transaction_family_id
+  BEFORE INSERT ON public.household_transactions
+  FOR EACH ROW EXECUTE PROCEDURE set_family_id();
+
+CREATE TRIGGER set_order_family_id
+  BEFORE INSERT ON public.orders
+  FOR EACH ROW EXECUTE PROCEDURE set_family_id();
+
+CREATE TRIGGER set_debt_family_id
+  BEFORE INSERT ON public.debts
+  FOR EACH ROW EXECUTE PROCEDURE set_family_id();

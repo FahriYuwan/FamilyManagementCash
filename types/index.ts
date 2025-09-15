@@ -4,6 +4,15 @@ export type TransactionType = 'income' | 'expense'
 export type DebtType = 'receivable' | 'payable'
 export type OrderStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
 
+// Family Types
+export interface Family {
+  id: string
+  name: string
+  created_at: string
+  updated_at: string
+  members?: User[]
+}
+
 // User Types
 export interface User {
   id: string
@@ -11,6 +20,8 @@ export interface User {
   name: string
   role: UserRole
   avatar_url?: string
+  family_id?: string
+  family?: Family
   created_at: string
   updated_at: string
 }
@@ -21,6 +32,7 @@ export interface UserProfile {
   name: string
   role: UserRole
   avatar_url?: string
+  family_id?: string
 }
 
 // Household Finance Types
@@ -47,6 +59,7 @@ export interface HouseholdTransaction {
   notes?: string
   created_at: string
   updated_at: string
+  family_id?: string
 }
 
 export interface CreateHouseholdTransactionData {
@@ -79,6 +92,7 @@ export interface Order {
   expenses?: OrderExpense[]
   total_expenses?: number
   profit?: number
+  family_id?: string
 }
 
 export interface CreateOrderData {
@@ -136,6 +150,7 @@ export interface Debt {
   created_at: string
   updated_at: string
   payments?: DebtPayment[]
+  family_id?: string
 }
 
 export interface CreateDebtData {
@@ -292,6 +307,9 @@ export interface AuthContextType {
   signOut: () => Promise<void>
   updateProfile: (data: Partial<User>) => Promise<void>
   refreshUser: () => Promise<void>
+  createFamily: (name: string) => Promise<Family | null>
+  joinFamily: (familyId: string) => Promise<boolean>
+  leaveFamily: () => Promise<boolean>
 }
 
 // Legacy types for backward compatibility

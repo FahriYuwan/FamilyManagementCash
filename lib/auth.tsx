@@ -4,7 +4,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, UserRole } from '@/types'
+import { User, UserRole, Family } from '@/types'
 import { Database } from '@/types/supabase'
 import { createClient } from '@/lib/supabase'
 
@@ -16,6 +16,9 @@ interface AuthContextType {
   signOut: () => Promise<void>
   updateProfile: (data: Database['public']['Tables']['users']['Update']) => Promise<void>
   refreshUser: () => Promise<void>
+  createFamily: (name: string) => Promise<Family | null>
+  joinFamily: (familyId: string) => Promise<boolean>
+  leaveFamily: () => Promise<boolean>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -49,10 +52,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('✅ Users table accessible, attempting to fetch profile...')
       
-      // Fetch profile with timeout
+      // Fetch profile with family information
       const profilePromise = supabase
         .from('users')
-        .select('*')
+        .select(`
+          *,
+          family:families(*)
+        `)
         .eq('id', userId)
         .single()
       
@@ -99,7 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: authUser.user.user_metadata?.name || authUser.user.email!.split('@')[0],
           role: authUser.user.user_metadata?.role || 'ibu'
         })
-        .select()
+        .select(`
+          *,
+          family:families(*)
+        `)
         .single()
       
       if (insertError) {
@@ -269,8 +278,109 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (profile) setUser(profile)
   }
 
+  const createFamily = async (name: string): Promise<Family | null> => {
+    if (!user) throw new Error('No user logged in')
+    
+    try {
+      // Create family
+      const { data: familyData, error: familyError } = await supabase
+        .from('families')
+        .insert({ name })
+        .select()
+        .single()
+      
+      if (familyError) throw familyError
+      
+      // Update user with family_id
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .update({ family_id: familyData.id })
+        .eq('id', user.id)
+        .select(`
+          *,
+          family:families(*)
+        `)
+        .single()
+      
+      if (userError) throw userError
+      
+      const updatedUser = userData as unknown as User
+      setUser(updatedUser)
+      
+      return familyData as unknown as Family
+    } catch (error) {
+      console.error('Error creating family:', error)
+      return null
+    }
+  }
+
+  const joinFamily = async (familyId: string): Promise<boolean> => {
+    if (!user) throw new Error('No user logged in')
+    
+    try {
+      // Update user with family_id
+      const { data, error } = await supabase
+        .from('users')
+        .update({ family_id: familyId })
+        .eq('id', user.id)
+        .select(`
+          *,
+          family:families(*)
+        `)
+        .single()
+      
+      if (error) throw error
+      
+      const updatedUser = data as unknown as User
+      setUser(updatedUser)
+      
+      return true
+    } catch (error) {
+      console.error('Error joining family:', error)
+      return false
+    }
+  }
+
+  const leaveFamily = async (): Promise<boolean> => {
+    if (!user) throw new Error('No user logged in')
+    
+    try {
+      // Remove family_id from user
+      const { data, error } = await supabase
+        .from('users')
+        .update({ family_id: null })
+        .eq('id', user.id)
+        .select(`
+          *,
+          family:families(*)
+        `)
+        .single()
+      
+      if (error) throw error
+      
+      const updatedUser = data as unknown as User
+      setUser(updatedUser)
+      
+      return true
+    } catch (error) {
+      console.error('Error leaving family:', error)
+      return false
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateProfile, refreshUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      signIn, 
+      signUp, 
+      signOut, 
+      updateProfile, 
+      refreshUser,
+      createFamily,
+      joinFamily,
+      leaveFamily
+    }}>
       {children}
     </AuthContext.Provider>
   )

@@ -25,6 +25,31 @@ export class HouseholdService {
     return data as HouseholdTransaction[]
   }
 
+  // Get family transactions for real-time sync
+  async getFamilyTransactions(familyId: string, filters?: {
+    startDate?: string
+    endDate?: string
+    type?: 'income' | 'expense'
+  }) {
+    let query = this.supabase
+      .from('household_transactions')
+      .select(`
+        *,
+        category:household_categories(*),
+        user:users(id, name, email)
+      `)
+      .eq('family_id', familyId)
+      .order('date', { ascending: false })
+
+    if (filters?.startDate) query = query.gte('date', filters.startDate)
+    if (filters?.endDate) query = query.lte('date', filters.endDate)
+    if (filters?.type) query = query.eq('type', filters.type)
+
+    const { data, error } = await query
+    if (error) throw error
+    return data as HouseholdTransaction[]
+  }
+
   async createTransaction(userId: string, data: CreateHouseholdTransactionData) {
     const { data: result, error } = await this.supabase
       .from('household_transactions')
@@ -124,5 +149,52 @@ export class HouseholdService {
     )
 
     return { ...summary, balance: summary.totalIncome - summary.totalExpenses }
+  }
+
+  // Get family summary for shared dashboard
+  async getFamilySummary(familyId: string) {
+    const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString().split('T')[0]
+
+    const { data: transactions, error } = await this.supabase
+      .from('household_transactions')
+      .select('*')
+      .eq('family_id', familyId)
+      .gte('date', startDate)
+
+    if (error) throw error
+
+    const summary = transactions.reduce(
+      (acc, t) => {
+        if (t.type === 'income') acc.totalIncome += t.amount
+        else acc.totalExpenses += t.amount
+        return acc
+      },
+      { totalIncome: 0, totalExpenses: 0 }
+    )
+
+    return { ...summary, balance: summary.totalIncome - summary.totalExpenses }
+  }
+
+  // Subscribe to real-time updates for family transactions
+  subscribeToFamilyTransactions(familyId: string, callback: (payload: any) => void) {
+    return this.supabase
+      .channel('household-transactions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'household_transactions',
+          filter: `family_id=eq.${familyId}`
+        },
+        callback
+      )
+      .subscribe()
+  }
+
+  // Unsubscribe from real-time updates
+  unsubscribeFromFamilyTransactions(channel: any) {
+    return this.supabase.removeChannel(channel)
   }
 }

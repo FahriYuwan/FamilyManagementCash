@@ -10,18 +10,21 @@ Aplikasi PWA (Progressive Web App) untuk pencatatan keuangan keluarga yang memis
 - Membantu keluarga melacak utang/piutang
 - Menyediakan laporan visual (grafik, pie chart) dan ekspor PDF/Excel
 - Memungkinkan custom kategori pengeluaran rumah tangga
+- **Memungkinkan sinkronisasi data antar anggota keluarga secara real-time**
 
 ## 👥 Target Pengguna
 
 ### Ibu Rumah Tangga
 - Mencatat pengeluaran rumah tangga (kategori standar & custom)
 - Melihat laporan sederhana berupa tabel & grafik
+- **Melihat dan berkolaborasi dalam pengelolaan keuangan keluarga**
 
 ### Ayah Pengusaha Konveksi
 - Mencatat pemasukan per order
 - Mencatat biaya produksi dengan breakdown detail
 - Mengelola catatan utang/piutang pelanggan
 - Melihat laba rugi per order & bulanan
+- **Berbagi data usaha dengan istri secara real-time**
 
 ## ✨ Fitur Utama
 
@@ -39,7 +42,7 @@ Aplikasi PWA (Progressive Web App) untuk pencatatan keuangan keluarga yang memis
   - Tenaga kerja
   - Operasional
 - Catatan utang/piutang pelanggan dengan status lunas/belum lunas
-- Laporan laba rugi per order & per bulan
+- Laporan laba rugi per order & per bulanan
 
 ### 📊 Ringkasan & Laporan
 - Ringkasan harian, mingguan, bulanan
@@ -52,6 +55,17 @@ Aplikasi PWA (Progressive Web App) untuk pencatatan keuangan keluarga yang memis
 - Login via Supabase Auth
 - Data tersinkronisasi otomatis
 - Role simple: Ayah (akses usaha & rumah tangga), Ibu (akses rumah tangga)
+- **Sinkronisasi data keluarga secara real-time**
+- **Tampilan konsolidasi data keuangan keluarga**
+
+### 👨‍👩‍👧‍👦 Sinkronisasi Keluarga (Fitur Baru)
+- Pembuatan grup keluarga untuk menghubungkan akun anggota keluarga
+- Berbagi data keuangan rumah tangga antar anggota keluarga
+- Berbagi data usaha konveksi (hanya untuk pengguna dengan role "Ayah")
+- Berbagi data utang/piutang antar anggota keluarga
+- Pembaruan data secara real-time tanpa perlu refresh manual
+- Tampilan dashboard konsolidasi untuk melihat keuangan keluarga secara keseluruhan
+- Kontrol akses: pengguna hanya dapat mengedit data yang mereka buat sendiri
 
 ## 🛠️ Tech Stack
 
@@ -69,6 +83,8 @@ Aplikasi PWA (Progressive Web App) untuk pencatatan keuangan keluarga yang memis
 3. Jika ada pelanggan belum bayar → catat piutang → update status saat lunas
 4. Aplikasi otomatis menghitung saldo & laba rugi
 5. Akhir bulan → ekspor laporan → pilih PDF/Excel
+6. **Anggota keluarga dapat bergabung dalam grup keluarga untuk berbagi data**
+7. **Data keuangan keluarga diperbarui secara real-time di semua perangkat**
 
 ## 🗄️ Database Structure
 
@@ -77,11 +93,19 @@ Aplikasi PWA (Progressive Web App) untuk pencatatan keuangan keluarga yang memis
 - name (text)
 - email (text, unique)
 - role (enum: 'ayah' | 'ibu')
+- **family_id (uuid, fk) - untuk menghubungkan ke grup keluarga**
 - created_at (timestamp)
+
+### Families (Grup Keluarga Baru)
+- id (uuid, pk)
+- name (text)
+- created_at (timestamp)
+- updated_at (timestamp)
 
 ### HouseholdTransactions (Keuangan Rumah Tangga)
 - id (uuid, pk)
 - user_id (uuid, fk)
+- **family_id (uuid, fk) - untuk sinkronisasi keluarga**
 - type (enum: 'income' | 'expense')
 - amount (numeric)
 - category (text)
@@ -91,6 +115,8 @@ Aplikasi PWA (Progressive Web App) untuk pencatatan keuangan keluarga yang memis
 
 ### Orders (Usaha Konveksi)
 - id (uuid, pk)
+- user_id (uuid, fk)
+- **family_id (uuid, fk) - untuk sinkronisasi keluarga**
 - customer_name (text)
 - order_date (timestamp)
 - income (numeric)
@@ -107,6 +133,8 @@ Aplikasi PWA (Progressive Web App) untuk pencatatan keuangan keluarga yang memis
 
 ### Debts (Utang/Piutang)
 - id (uuid, pk)
+- user_id (uuid, fk)
+- **family_id (uuid, fk) - untuk sinkronisasi keluarga**
 - order_id (uuid, fk, nullable)
 - debtor_name (text)
 - amount (numeric)
@@ -152,6 +180,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 2. **Ayah ingin tahu keuntungan order seragam sekolah** → buka detail order → lihat breakdown biaya vs pemasukan → laba rugi otomatis muncul
 3. **Ada pelanggan belum bayar** → ayah catat piutang → aplikasi tandai status
 4. **Keluarga ingin diskusi bulanan** → ekspor laporan ke PDF/Excel
+5. **Ibu dan Ayah ingin melihat keuangan keluarga secara keseluruhan** → bergabung dalam grup keluarga → lihat dashboard konsolidasi
+6. **Saat Ayah menambahkan transaksi baru, Ibu langsung dapat melihatnya** → data diperbarui secara real-time
 
 ## 🤝 Contributing
 
