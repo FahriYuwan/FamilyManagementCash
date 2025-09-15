@@ -72,7 +72,12 @@ export class FamilyService {
         console.error('Error code:', familyError.code)
         console.error('Error message:', familyError.message)
         if (familyError.code === '42501' || familyError.message.includes('permission') || familyError.message.includes('403')) {
-          return { family: null, error: 'Insufficient permissions to create family. Please check your account permissions.' }
+          console.error('RLS Policy Error Details:', {
+            code: familyError.code,
+            message: familyError.message,
+            hint: familyError.hint
+          });
+          return { family: null, error: 'Insufficient permissions to create family. Please check your account permissions. Error: ' + familyError.message }
         }
         return { family: null, error: 'Failed to create family: ' + familyError.message }
       }

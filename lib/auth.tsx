@@ -289,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (result.error) {
         console.error('Error creating family:', result.error)
-        alert('Error: ' + result.error)
+        alert('Error creating family: ' + result.error)
         return null
       }
       

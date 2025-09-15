@@ -484,18 +484,6 @@ USING (
   EXISTS (SELECT 1 FROM public.users WHERE family_id = families.id AND id = auth.uid())
 );
 
-CREATE POLICY "Users can insert families" 
-ON public.families FOR INSERT 
-WITH CHECK (
-  true
-);
-
-CREATE POLICY "Family members can insert families" 
-ON public.families FOR INSERT 
-WITH CHECK (
-  auth.uid() IS NOT NULL
-);
-
 CREATE POLICY "Authenticated users can create families" 
 ON public.families FOR INSERT 
 WITH CHECK (

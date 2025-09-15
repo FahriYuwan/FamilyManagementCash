@@ -236,11 +236,11 @@ export default function SettingsPage() {
         setShowCreateFamilyForm(false)
         await loadData() // Refresh data to show family info
       } else {
-        alert('Error creating family')
+        // Error message is now handled in the auth service
       }
     } catch (error) {
       console.error('Error creating family:', error)
-      alert('Error creating family')
+      alert('Error creating family: ' + (error as Error).message)
     } finally {
       setFamilyOperationLoading(false)
     }
