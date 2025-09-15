@@ -5,6 +5,10 @@ import { Family, User, UserRole } from '@/types'
 export class FamilyService {
   private supabase = createClient()
 
+  constructor() {
+    console.log('FamilyService initialized with supabase client');
+  }
+
   async getFamilyById(familyId: string): Promise<Family | null> {
     const { data, error } = await this.supabase
       .from('families')

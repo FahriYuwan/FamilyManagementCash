@@ -285,7 +285,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     console.log('Creating family with user:', user);
     try {
+      console.log('Calling familyService.createFamily with:', { name, userId: user.id, userRole: user.role });
       const result = await familyService.createFamily(name, user.id, user.role)
+      console.log('Family service result:', result);
       
       if (result.error) {
         console.error('Error creating family:', result.error)
