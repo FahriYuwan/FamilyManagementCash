@@ -6,7 +6,6 @@ import { HouseholdService } from '@/lib/household-service'
 import { FamilyService } from '@/lib/family-service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Plus, 
   Edit2, 
@@ -109,6 +108,7 @@ export default function SettingsPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [dataLoading, setDataLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState('categories')
   
   // Family management states
   const [showCreateFamilyForm, setShowCreateFamilyForm] = useState(false)
@@ -413,15 +413,58 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="categories" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="family">Family</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
+      {/* Mobile-friendly Tabs */}
+      <div className="mb-6">
+        {/* Mobile dropdown selector */}
+        <div className="sm:hidden mb-4">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm hover:border-gray-400 transition-colors"
+          >
+            <option value="categories">Categories</option>
+            <option value="family">Family</option>
+            <option value="preferences">Preferences</option>
+            <option value="notifications">Notifications</option>
+          </select>
+        </div>
+        
+        {/* Desktop tab buttons with better responsive layout */}
+        <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+          <Button
+            variant={activeTab === 'categories' ? 'primary' : 'outline'}
+            onClick={() => setActiveTab('categories')}
+            className="py-2 px-3 text-sm w-full"
+          >
+            Categories
+          </Button>
+          <Button
+            variant={activeTab === 'family' ? 'primary' : 'outline'}
+            onClick={() => setActiveTab('family')}
+            className="py-2 px-3 text-sm w-full"
+          >
+            Family
+          </Button>
+          <Button
+            variant={activeTab === 'preferences' ? 'primary' : 'outline'}
+            onClick={() => setActiveTab('preferences')}
+            className="py-2 px-3 text-sm w-full"
+          >
+            Preferences
+          </Button>
+          <Button
+            variant={activeTab === 'notifications' ? 'primary' : 'outline'}
+            onClick={() => setActiveTab('notifications')}
+            className="py-2 px-3 text-sm w-full"
+          >
+            Notifications
+          </Button>
+        </div>
+      </div>
 
-        <TabsContent value="categories" className="space-y-6">
+      {/* Tab Content */}
+      <div className="space-y-6">
+        {activeTab === 'categories' && (
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -579,9 +622,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
 
-        <TabsContent value="family" className="space-y-6">
+        {activeTab === 'family' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -711,9 +754,9 @@ export default function SettingsPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
 
-        <TabsContent value="preferences" className="space-y-6">
+        {activeTab === 'preferences' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -786,9 +829,9 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="notifications" className="space-y-6">
+        {activeTab === 'notifications' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -861,8 +904,8 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   )
 }
