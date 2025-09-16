@@ -445,15 +445,15 @@ export default function SettingsPage() {
           </select>
         </div>
         <TabsList className="hidden sm:grid w-full sm:grid-cols-4">
-          <TabsTrigger value="categories" className="px-2 py-2 text-xs sm:text-sm">Categories</TabsTrigger>
-          <TabsTrigger value="family" className="px-2 py-2 text-xs sm:text-sm">Family</TabsTrigger>
-          <TabsTrigger value="preferences" className="px-2 py-2 text-xs sm:text-sm">Preferences</TabsTrigger>
-          <TabsTrigger value="notifications" className="px-2 py-2 text-xs sm:text-sm">Notifications</TabsTrigger>
+          <TabsTrigger value="categories" className="px-2 py-2 text-xs sm:text-sm" onClick={() => setActiveTab('categories')}>Categories</TabsTrigger>
+          <TabsTrigger value="family" className="px-2 py-2 text-xs sm:text-sm" onClick={() => setActiveTab('family')}>Family</TabsTrigger>
+          <TabsTrigger value="preferences" className="px-2 py-2 text-xs sm:text-sm" onClick={() => setActiveTab('preferences')}>Preferences</TabsTrigger>
+          <TabsTrigger value="notifications" className="px-2 py-2 text-xs sm:text-sm" onClick={() => setActiveTab('notifications')}>Notifications</TabsTrigger>
         </TabsList>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsContent value="categories" className="space-y-6">
+      <div className="space-y-6">
+        {activeTab === 'categories' && (
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -463,13 +463,13 @@ export default function SettingsPage() {
               <div className="flex flex-wrap gap-2">
                 <Button onClick={addDefaultCategories} variant="outline" size="sm" className="text-xs sm:text-sm">
                   <Database className="h-4 w-4 mr-2" />
-                  <span className="hidden xs:inline sm:inline">Add Defaults</span>
-                  <span className="xs:hidden">Defaults</span>
+                  <span className="hidden sm:inline">Add Defaults</span>
+                  <span className="sm:hidden">Defaults</span>
                 </Button>
                 <Button onClick={() => setShowAddForm(true)} size="sm" className="text-xs sm:text-sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden xs:inline sm:inline">Add Category</span>
-                  <span className="xs:hidden">Add</span>
+                  <span className="hidden sm:inline">Add Category</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               </div>
             </CardHeader>
@@ -612,9 +612,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
 
-        <TabsContent value="family" className="space-y-6">
+        {activeTab === 'family' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -746,9 +746,9 @@ export default function SettingsPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
 
-        <TabsContent value="preferences" className="space-y-6">
+        {activeTab === 'preferences' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -821,9 +821,9 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="notifications" className="space-y-6">
+        {activeTab === 'notifications' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -920,8 +920,8 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   )
 }
