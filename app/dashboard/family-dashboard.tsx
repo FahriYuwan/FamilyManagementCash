@@ -427,7 +427,7 @@ export default function FamilyDashboardPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Menu Utama</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             <Link href="/household/transactions">
-              <Button className="h-auto p-3 sm:p-4 flex flex-col items-center space-y-1 sm:space-y-2 w-full text-xs sm:text-sm">
+              <Button variant="outline" className="h-auto p-3 sm:p-4 flex flex-col items-center space-y-1 sm:space-y-2 w-full text-xs sm:text-sm">
                 <Home className="h-5 w-5 sm:h-6 sm:w-6" />
                 <span>Keuangan Rumah</span>
               </Button>
