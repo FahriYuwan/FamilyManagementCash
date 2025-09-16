@@ -2,7 +2,7 @@
   "name": "Family Management Cash",
   "short_name": "Family Cash",
   "description": "Aplikasi pencatatan keuangan keluarga dan usaha konveksi",
-  "start_url": "/",
+  "start_url": "/auth/login",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",

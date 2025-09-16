@@ -83,7 +83,7 @@ const COLOR_OPTIONS = [
 ]
 
 export default function SettingsPage() {
-  const { user, loading, createFamily, joinFamily, leaveFamily, refreshUser } = useAuth()
+  const { user, loading, createFamily, joinFamily, leaveFamily, refreshUser, refreshSession } = useAuth()
   const [categories, setCategories] = useState<HouseholdCategory[]>([])
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: 'light',
@@ -126,6 +126,23 @@ export default function SettingsPage() {
       loadData()
     }
   }, [user])
+
+  // Add periodic session refresh
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (user) {
+      interval = setInterval(() => {
+        refreshSession();
+      }, 10 * 60 * 1000); // Refresh every 10 minutes
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [user, refreshSession]);
 
   // Separate effect for family subscription
   useEffect(() => {

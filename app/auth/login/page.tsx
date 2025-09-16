@@ -156,19 +156,6 @@ export default function LoginPage() {
               {loading ? 'Masuk...' : 'Masuk'}
             </Button>
           </form>
-
-          {/* Demo Accounts */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 mb-3">Demo Akun (Development):</p>
-            <div className="space-y-2 text-xs text-gray-500">
-              <div className="bg-gray-50 p-2 rounded">
-                <strong>Ayah:</strong> ayah@demo.com / password123
-              </div>
-              <div className="bg-gray-50 p-2 rounded">
-                <strong>Ibu:</strong> ibu@demo.com / password123
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Back to Home */}
@@ -176,8 +163,8 @@ export default function LoginPage() {
           <Link href="/" className="text-sm text-gray-600 hover:text-gray-900 block">
             ← Kembali ke Beranda
           </Link>
-          <Link href="/auth/debug" className="text-xs text-blue-600 hover:text-blue-800 block">
-            🔍 Debug Authentication
+          <Link href="/auth/register" className="text-sm text-primary-600 hover:text-primary-500 block">
+            Belum punya akun? Daftar di sini
           </Link>
         </div>
       </div>

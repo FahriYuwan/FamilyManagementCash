@@ -17,6 +17,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
   updateProfile: (data: Database['public']['Tables']['users']['Update']) => Promise<void>
   refreshUser: () => Promise<void>
+  refreshSession: () => Promise<void>
   createFamily: (name: string) => Promise<Family | null>
   joinFamily: (familyId: string) => Promise<boolean>
   leaveFamily: () => Promise<boolean>
@@ -228,41 +229,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
         
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          const profile = await getUserProfile(session.user.id)
-          if (profile) setUser(profile)
+        // Get session with retry mechanism
+        let attempts = 0;
+        const maxAttempts = 3;
+        let sessionData = null;
+        
+        while (attempts < maxAttempts && !sessionData) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            sessionData = session;
+            break;
+          } catch (error) {
+            console.warn(`Session fetch attempt ${attempts + 1} failed:`, error);
+            attempts++;
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Exponential backoff
+            }
+          }
+        }
+        
+        if (sessionData?.user) {
+          const profile = await getUserProfile(sessionData.user.id);
+          if (profile) setUser(profile);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error)
+        console.error('Error initializing auth:', error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    initAuth()
+    initAuth();
+
+    // Set up periodic session refresh
+    let refreshInterval: NodeJS.Timeout | null = null;
+    if (typeof window !== 'undefined') {
+      refreshInterval = setInterval(() => {
+        if (user && supabase) {
+          refreshUser();
+        }
+      }, 15 * 60 * 1000); // Refresh every 15 minutes
+    }
 
     // Only set up auth state listener in browser and if Supabase is available
     if (typeof window !== 'undefined' && supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
-          if (session?.user && event === 'SIGNED_IN') {
-            const profile = await getUserProfile(session.user.id)
-            if (profile) setUser(profile)
+          console.log('Auth state change:', event, session?.user?.id);
+          
+          if (session?.user) {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+              try {
+                const profile = await getUserProfile(session.user.id);
+                if (profile) {
+                  setUser(profile);
+                  console.log('User profile set after auth event:', event);
+                }
+              } catch (error) {
+                console.error('Error fetching profile after auth event:', error);
+              }
+            }
           } else if (event === 'SIGNED_OUT') {
-            setUser(null)
+            setUser(null);
+            console.log('User signed out');
           }
-          setLoading(false)
+          
+          // Only set loading to false if it's not already false
+          if (loading) {
+            setLoading(false);
+          }
         }
-      )
+      );
 
       return () => {
         if (subscription) {
-          subscription.unsubscribe()
+          subscription.unsubscribe();
         }
-      }
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
+        }
+      };
     }
-  }, [])
+  }, [supabase, loading]);
 
   const signIn = async (email: string, password: string) => {
     console.log('🔍 Starting signIn with timeout protection...')
@@ -391,38 +439,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const refreshUser = async () => {
-    if (!user) {
-      console.log('No user to refresh');
-      return;
-    }
-    console.log('Refreshing user data for user:', user.id);
-    
-    // Tambahkan beberapa percobaan untuk memperbarui data
-    let attempts = 0;
-    const maxAttempts = 3;
-    
-    while (attempts < maxAttempts) {
-      try {
-        const profile = await getUserProfile(user.id);
-        if (profile) {
-          console.log('User profile refreshed with family data:', profile);
-          setUser(profile);
-          return;
-        } else {
-          console.log('Failed to refresh user profile, attempt:', attempts + 1);
+    try {
+      if (!user) {
+        // If no user in state, check if there's a session
+        console.log('No user in state, checking for session');
+        
+        if (supabase) {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Error getting session:', error);
+            return;
+          }
+          
+          if (session?.user) {
+            console.log('Found session, fetching profile for user:', session.user.id);
+            const profile = await getUserProfile(session.user.id);
+            if (profile) {
+              console.log('User profile refreshed from session:', profile);
+              setUser(profile);
+              return;
+            }
+          } else {
+            console.log('No active session found');
+          }
+        }
+        return;
+      }
+      
+      console.log('Refreshing user data for user:', user.id);
+      
+      // Tambahkan beberapa percobaan untuk memperbarui data
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          const profile = await getUserProfile(user.id);
+          if (profile) {
+            console.log('User profile refreshed with family data:', profile);
+            setUser(profile);
+            return;
+          } else {
+            console.log('Failed to refresh user profile, attempt:', attempts + 1);
+            attempts++;
+            // Tunggu sebentar sebelum mencoba lagi
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Exponential backoff
+            }
+          }
+        } catch (error) {
+          console.error('Error refreshing user profile, attempt:', attempts + 1, error);
           attempts++;
           // Tunggu sebentar sebelum mencoba lagi
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Exponential backoff
+          }
         }
-      } catch (error) {
-        console.error('Error refreshing user profile, attempt:', attempts + 1, error);
-        attempts++;
-        // Tunggu sebentar sebelum mencoba lagi
-        await new Promise(resolve => setTimeout(resolve, 1000));
       }
+      
+      console.log('Failed to refresh user profile after', maxAttempts, 'attempts');
+    } catch (error) {
+      console.error('Error in refreshUser function:', error);
     }
+  };
+
+  const refreshSession = async () => {
+    if (!supabase) return;
     
-    console.log('Failed to refresh user profile after', maxAttempts, 'attempts');
+    try {
+      console.log('Attempting to refresh session');
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('Error refreshing session:', error);
+        return;
+      }
+      
+      if (data.session?.user) {
+        console.log('Session refreshed successfully');
+        const profile = await getUserProfile(data.session.user.id);
+        if (profile) {
+          setUser(profile);
+        }
+      } else {
+        console.log('No session after refresh');
+      }
+    } catch (error) {
+      console.error('Error in refreshSession function:', error);
+    }
   };
 
   const createFamily = async (name: string): Promise<Family | null> => {
@@ -508,6 +613,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut, 
       updateProfile, 
       refreshUser,
+      refreshSession,
       createFamily,
       joinFamily,
       leaveFamily

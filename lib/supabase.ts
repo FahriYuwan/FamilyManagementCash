@@ -61,15 +61,16 @@ export function createClient() {
       supabaseKey,
       {
         auth: {
-          persistSession: isBrowser,
-          autoRefreshToken: isBrowser,
-          detectSessionInUrl: isBrowser,
-          storage: isBrowser ? window.localStorage : undefined,
-          storageKey: 'supabase.auth.token'
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: window.localStorage,
+          storageKey: 'supabase.auth.token',
+          flowType: 'pkce'
         },
         global: {
           headers: {
-            'Cache-Control': 'max-age=300' // 5 minutes cache
+            'Cache-Control': 'no-store'
           }
         }
       }

@@ -12,7 +12,7 @@ import { Wallet, Home, Package, BarChart3, LogOut, User, TrendingUp, TrendingDow
 import Link from 'next/link'
 
 export default function FamilyDashboardPage() {
-  const { user, loading, signOut, refreshUser } = useAuth()
+  const { user, loading, signOut, refreshUser, refreshSession } = useAuth()
   const { canAccessBusiness } = useRoleAccess()
   const router = useRouter()
   const [dashboardData, setDashboardData] = useState({
@@ -62,6 +62,23 @@ export default function FamilyDashboardPage() {
       }
     }
   }, [user, loading, router])
+
+  // Add periodic session refresh
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (user && !loading) {
+      interval = setInterval(() => {
+        refreshSession();
+      }, 10 * 60 * 1000); // Refresh every 10 minutes
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [user, loading, refreshSession]);
 
   const loadDashboardData = async () => {
     if (!user?.family_id) {

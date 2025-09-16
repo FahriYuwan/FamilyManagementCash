@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { HouseholdTransaction, HouseholdCategory, TransactionType } from '@/types'
 
 export default function HouseholdTransactionsPage() {
-  const { user } = useAuth()
+  const { user, refreshSession } = useAuth()
   const [transactions, setTransactions] = useState<HouseholdTransaction[]>([])
   const [categories, setCategories] = useState<HouseholdCategory[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,6 +41,23 @@ export default function HouseholdTransactionsPage() {
       }
     }
   }, [user])
+
+  // Add periodic session refresh
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (user) {
+      interval = setInterval(() => {
+        refreshSession();
+      }, 10 * 60 * 1000); // Refresh every 10 minutes
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [user, refreshSession]);
 
   const loadData = async () => {
     try {

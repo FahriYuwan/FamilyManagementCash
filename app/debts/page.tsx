@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { Debt, DebtType } from '@/types'
 
 export default function DebtsPage() {
-  const { user } = useAuth()
+  const { user, refreshSession } = useAuth()
   const [debts, setDebts] = useState<Debt[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -29,6 +29,23 @@ export default function DebtsPage() {
       loadDebts()
     }
   }, [user])
+
+  // Add periodic session refresh
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (user) {
+      interval = setInterval(() => {
+        refreshSession();
+      }, 10 * 60 * 1000); // Refresh every 10 minutes
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [user, refreshSession]);
 
   const loadDebts = async () => {
     try {

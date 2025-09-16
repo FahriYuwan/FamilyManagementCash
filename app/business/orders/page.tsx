@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { Order, OrderStatus } from '@/types'
 
 export default function BusinessOrdersPage() {
-  const { user } = useAuth()
+  const { user, refreshSession } = useAuth()
   const { canAccessBusiness } = useRoleAccess()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,6 +34,23 @@ export default function BusinessOrdersPage() {
       loadOrders()
     }
   }, [user, canAccessBusiness])
+
+  // Add periodic session refresh
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (user && canAccessBusiness) {
+      interval = setInterval(() => {
+        refreshSession();
+      }, 10 * 60 * 1000); // Refresh every 10 minutes
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [user, canAccessBusiness, refreshSession]);
 
   const loadOrders = async () => {
     try {

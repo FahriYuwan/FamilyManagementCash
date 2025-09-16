@@ -1,6 +1,8 @@
 const CACHE_NAME = 'family-cash-v1'
 const urlsToCache = [
   '/',
+  '/auth/login',
+  '/auth/register',
   '/manifest.json',
   '/icon-192x192.png',
   '/icon-512x512.png'
