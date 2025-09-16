@@ -116,6 +116,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select('*')
             .eq('family_id', userData.family_id);
           
+          // Log the query for debugging
+          console.log('Fetching family members with family_id:', userData.family_id);
+          
           if (membersError) {
             console.error('❌ Family members fetch error:', membersError);
             throw new Error(`Database error querying family members: ${membersError.message} (Code: ${membersError.code})`);

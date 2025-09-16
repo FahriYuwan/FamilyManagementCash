@@ -264,6 +264,7 @@ export class FamilyService {
 
   async getFamilyMembers(familyId: string): Promise<User[]> {
     try {
+      console.log('Fetching family members for familyId:', familyId);
       const { data, error } = await this.supabase
         .from('users')
         .select('*')
@@ -273,7 +274,8 @@ export class FamilyService {
         console.error('Error fetching family members:', error)
         return []
       }
-
+      
+      console.log('Family members fetched:', data);
       return data as unknown as User[]
     } catch (error) {
       console.error('Exception in getFamilyMembers:', error)
