@@ -24,8 +24,9 @@ import {
   Area,
   AreaChart
 } from 'recharts'
-import { Calendar, Download, TrendingUp, TrendingDown, BarChart3, FileText, FileSpreadsheet } from 'lucide-react'
+import { Calendar, Download, TrendingUp, TrendingDown, BarChart3, FileText, FileSpreadsheet, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
+import Link from 'next/link'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
@@ -102,16 +103,27 @@ export default function ReportsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Laporan Keuangan</h1>
-          <p className="text-gray-600 mt-2">Analisis dan wawasan keuangan yang komprehensif</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+        <div className="flex items-center">
+          <Link 
+            href="/dashboard" 
+            className="mr-4 p-2 hover:bg-gray-100 rounded-full"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div className="flex items-center">
+            <BarChart3 className="h-8 w-8 text-primary-600 mr-3" />
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Laporan Keuangan</h1>
+              <p className="text-sm sm:text-base text-gray-600">Analisis dan wawasan keuangan yang komprehensif</p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as '3' | '6' | '12')}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-base"
           >
             <option value="3">3 bulan terakhir</option>
             <option value="6">6 bulan terakhir</option>

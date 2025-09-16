@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth'
 import { DebtService } from '@/lib/debt-service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, CreditCard, DollarSign, ArrowLeft, Calendar, Edit2, Trash2, Check, X } from 'lucide-react'
+import { Plus, CreditCard, ArrowLeft, Edit2, Trash2, Check, X, Calendar, DollarSign, Home } from 'lucide-react'
 import Link from 'next/link'
 import { Debt, DebtType } from '@/types'
 
@@ -167,9 +167,12 @@ export default function DebtsPage() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hutang & Piutang</h1>
-              <p className="text-sm sm:text-base text-gray-600">Kelola catatan hutang dan piutang keluarga</p>
+            <div className="flex items-center">
+              <CreditCard className="h-8 w-8 text-primary-600 mr-3" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hutang & Piutang</h1>
+                <p className="text-sm sm:text-base text-gray-600">Kelola catatan hutang dan piutang keluarga</p>
+              </div>
             </div>
           </div>
           <Button onClick={() => setShowForm(!showForm)} className="w-full sm:w-auto">

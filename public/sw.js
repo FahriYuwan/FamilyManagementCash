@@ -3,8 +3,9 @@ const urlsToCache = [
   '/',
   '/auth/login',
   '/auth/register',
+  '/auth/forgot-password',
   '/manifest.json',
-  '/icon-192x192.png',
+  '/icon-192x190.png',
   '/icon-512x512.png'
 ]
 
@@ -25,7 +26,21 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Skip API routes for real-time data
-  if (event.request.url.includes('/api/')) {
+  if (event.request.url.includes('/api/') || event.request.url.includes('/supabase/')) {
+    return
+  }
+
+  // Handle navigation requests (for PWA navigation)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/auth/login')
+        .then((response) => {
+          return response || fetch(event.request).catch(() => {
+            // If fetch fails, serve the login page from cache as fallback
+            return caches.match('/auth/login')
+          })
+        })
+    )
     return
   }
 

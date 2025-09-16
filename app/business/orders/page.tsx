@@ -5,7 +5,7 @@ import { useAuth, useRoleAccess } from '@/lib/auth'
 import { BusinessService } from '@/lib/business-service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Package, Eye, ArrowLeft, Edit2, Trash2, Check, X } from 'lucide-react'
+import { Plus, Package, Eye, ArrowLeft, Edit2, Trash2, Check, X, Home } from 'lucide-react'
 import Link from 'next/link'
 import { Order, OrderStatus } from '@/types'
 
@@ -198,9 +198,12 @@ export default function BusinessOrdersPage() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Pesanan Usaha Konveksi</h1>
-              <p className="text-sm sm:text-base text-gray-600">Kelola pesanan pelanggan dan pantau keuntungan</p>
+            <div className="flex items-center">
+              <Package className="h-8 w-8 text-primary-600 mr-3" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Pesanan Usaha Konveksi</h1>
+                <p className="text-sm sm:text-base text-gray-600">Kelola pesanan pelanggan dan pantau keuntungan</p>
+              </div>
             </div>
           </div>
           <Button onClick={() => setShowForm(!showForm)} className="w-full sm:w-auto">

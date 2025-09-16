@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth'
 import { HouseholdService } from '@/lib/household-service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, TrendingUp, TrendingDown, ArrowLeft, Edit2, Trash2, Check, X, Users, RefreshCw } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, ArrowLeft, Edit2, Trash2, Check, X, Users, RefreshCw, Home } from 'lucide-react'
 import Link from 'next/link'
 import { HouseholdTransaction, HouseholdCategory, TransactionType } from '@/types'
 
@@ -222,9 +222,12 @@ export default function HouseholdTransactionsPage() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Transaksi Rumah Tangga</h1>
-              <p className="text-sm sm:text-base text-gray-600">Kelola pemasukan dan pengeluaran keluarga harian</p>
+            <div className="flex items-center">
+              <Home className="h-8 w-8 text-primary-600 mr-3" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Transaksi Rumah Tangga</h1>
+                <p className="text-sm sm:text-base text-gray-600">Kelola pemasukan dan pengeluaran keluarga harian</p>
+              </div>
             </div>
           </div>
           <div className="flex gap-2">

@@ -24,7 +24,8 @@ import {
   PlusCircle,
   LogIn,
   LogOut,
-  ArrowLeft
+  ArrowLeft,
+  Home
 } from 'lucide-react'
 import { HouseholdCategory } from '@/types'
 import { EditHistoryComponent } from '@/components/edit-history'
@@ -406,22 +407,20 @@ export default function SettingsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="md:hidden">
-            <Button variant="outline" size="sm" className="p-2">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+        <div className="flex items-center">
+          <Link 
+            href="/dashboard" 
+            className="mr-4 p-2 hover:bg-gray-100 rounded-full"
+          >
+            <ArrowLeft className="h-5 w-5" />
           </Link>
-          <Link href="/dashboard" className="hidden md:block">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="text-gray-600 mt-2">Manage your preferences and categories</p>
+          <div className="flex items-center">
+            <Settings className="h-8 w-8 text-primary-600 mr-3" />
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Settings</h1>
+              <p className="text-sm sm:text-base text-gray-600">Manage your preferences and categories</p>
+            </div>
           </div>
         </div>
         <Button onClick={savePreferences} disabled={saving} className="w-full sm:w-auto">
