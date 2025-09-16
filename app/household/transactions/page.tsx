@@ -132,12 +132,7 @@ export default function HouseholdTransactionsPage() {
   }
 
   const handleEdit = (transaction: any) => {
-    // Only allow editing own transactions
-    if (transaction.user_id !== user!.id) {
-      alert('Anda hanya dapat mengedit transaksi yang Anda buat sendiri.')
-      return
-    }
-    
+    // Allow family members to edit each other's transactions
     setEditingTransaction(transaction)
     setFormData({
       type: transaction.type,
@@ -150,12 +145,7 @@ export default function HouseholdTransactionsPage() {
   }
 
   const handleDelete = async (transactionId: string, transactionUserId: string) => {
-    // Only allow deleting own transactions
-    if (transactionUserId !== user!.id) {
-      alert('Anda hanya dapat menghapus transaksi yang Anda buat sendiri.')
-      return
-    }
-    
+    // Allow family members to delete each other's transactions
     if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
       try {
         const service = new HouseholdService()
@@ -393,30 +383,22 @@ export default function HouseholdTransactionsPage() {
                             Rp{transaction.amount.toLocaleString('id-ID')}
                           </div>
                           <div className="flex gap-1 mt-2">
-                            {transaction.user_id === user!.id ? (
-                              <>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => handleEdit(transaction)}
-                                  className="p-1 h-8 w-8"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => handleDelete(transaction.id, transaction.user_id)}
-                                  className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            ) : (
-                              <span className="text-xs text-gray-400 px-2 py-1">
-                                Transaksi keluarga
-                              </span>
-                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEdit(transaction)}
+                              className="p-1 h-8 w-8"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleDelete(transaction.id, transaction.user_id)}
+                              className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -493,29 +475,21 @@ export default function HouseholdTransactionsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <div className="flex gap-2">
-                            {transaction.user_id === user!.id ? (
-                              <>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => handleEdit(transaction)}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => handleDelete(transaction.id, transaction.user_id)}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            ) : (
-                              <span className="text-xs text-gray-400 px-2 py-1 rounded">
-                                Transaksi keluarga
-                              </span>
-                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEdit(transaction)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleDelete(transaction.id, transaction.user_id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </td>
                       </tr>
