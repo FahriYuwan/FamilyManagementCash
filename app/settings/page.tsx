@@ -85,6 +85,7 @@ const COLOR_OPTIONS = [
 
 export default function SettingsPage() {
   const { user, loading, createFamily, joinFamily, leaveFamily, refreshUser, refreshSession } = useAuth()
+  const [activeTab, setActiveTab] = useState('categories')
   const [categories, setCategories] = useState<HouseholdCategory[]>([])
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: 'light',
@@ -405,7 +406,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div className="flex items-center">
@@ -429,14 +430,29 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="categories" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="family">Family</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+      {/* Mobile-friendly Tabs */}
+      <div className="mb-6">
+        <div className="sm:hidden">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm"
+          >
+            <option value="categories">Categories</option>
+            <option value="family">Family</option>
+            <option value="preferences">Preferences</option>
+            <option value="notifications">Notifications</option>
+          </select>
+        </div>
+        <TabsList className="hidden sm:grid w-full sm:grid-cols-4">
+          <TabsTrigger value="categories" className="px-2 py-2 text-xs sm:text-sm">Categories</TabsTrigger>
+          <TabsTrigger value="family" className="px-2 py-2 text-xs sm:text-sm">Family</TabsTrigger>
+          <TabsTrigger value="preferences" className="px-2 py-2 text-xs sm:text-sm">Preferences</TabsTrigger>
+          <TabsTrigger value="notifications" className="px-2 py-2 text-xs sm:text-sm">Notifications</TabsTrigger>
         </TabsList>
+      </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsContent value="categories" className="space-y-6">
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -445,15 +461,15 @@ export default function SettingsPage() {
                 <CardDescription>Manage your transaction categories</CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={addDefaultCategories} variant="outline" size="sm">
+                <Button onClick={addDefaultCategories} variant="outline" size="sm" className="text-xs sm:text-sm">
                   <Database className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Add Defaults</span>
-                  <span className="sm:hidden">Defaults</span>
+                  <span className="hidden xs:inline sm:inline">Add Defaults</span>
+                  <span className="xs:hidden">Defaults</span>
                 </Button>
-                <Button onClick={() => setShowAddForm(true)} size="sm">
+                <Button onClick={() => setShowAddForm(true)} size="sm" className="text-xs sm:text-sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Add Category</span>
-                  <span className="sm:hidden">Add</span>
+                  <span className="hidden xs:inline sm:inline">Add Category</span>
+                  <span className="xs:hidden">Add</span>
                 </Button>
               </div>
             </CardHeader>
@@ -462,8 +478,8 @@ export default function SettingsPage() {
               {showAddForm && (
                 <div className="bg-gray-50 p-4 rounded-lg mb-6">
                   <h4 className="font-medium mb-3">Tambah Kategori Baru</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="sm:col-span-2 md:col-span-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
                       <input
                         type="text"
@@ -473,7 +489,7 @@ export default function SettingsPage() {
                         placeholder="Nama kategori"
                       />
                     </div>
-                    <div>
+                    <div className="sm:col-span-1 md:col-span-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Ikon</label>
                       <input
                         type="text"
@@ -483,7 +499,7 @@ export default function SettingsPage() {
                         placeholder="🏠"
                       />
                     </div>
-                    <div>
+                    <div className="sm:col-span-1 md:col-span-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
                       <div className="grid grid-cols-6 gap-2">
                         {COLOR_OPTIONS.map((color) => (
@@ -499,12 +515,12 @@ export default function SettingsPage() {
                         ))}
                       </div>
                     </div>
-                    <div className="flex items-end space-x-2">
-                      <Button onClick={handleCreateCategory} size="sm">
+                    <div className="flex items-end space-x-2 sm:col-span-2 md:col-span-1">
+                      <Button onClick={handleCreateCategory} size="sm" className="text-xs">
                         <Save className="h-4 w-4 mr-2" />
                         Save
                       </Button>
-                      <Button onClick={() => setShowAddForm(false)} variant="outline" size="sm">
+                      <Button onClick={() => setShowAddForm(false)} variant="outline" size="sm" className="text-xs">
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -545,10 +561,10 @@ export default function SettingsPage() {
                           ))}
                         </div>
                         <div className="flex space-x-2">
-                          <Button onClick={handleUpdateCategory} size="sm">
+                          <Button onClick={handleUpdateCategory} size="sm" className="text-xs">
                             <Save className="h-4 w-4" />
                           </Button>
-                          <Button onClick={() => setEditingCategory(null)} variant="outline" size="sm">
+                          <Button onClick={() => setEditingCategory(null)} variant="outline" size="sm" className="text-xs">
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
@@ -563,7 +579,7 @@ export default function SettingsPage() {
                             {category.icon || '📝'}
                           </div>
                           <div>
-                            <h4 className="font-medium">{category.name}</h4>
+                            <h4 className="font-medium text-sm">{category.name}</h4>
                             {category.is_default && (
                               <span className="text-xs text-gray-500">Default</span>
                             )}
@@ -574,6 +590,7 @@ export default function SettingsPage() {
                             onClick={() => setEditingCategory(category)} 
                             variant="ghost" 
                             size="sm"
+                            className="h-8 w-8 p-1"
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -582,7 +599,7 @@ export default function SettingsPage() {
                               onClick={() => handleDeleteCategory(category.id)} 
                               variant="ghost" 
                               size="sm"
-                              className="text-red-600 hover:text-red-700"
+                              className="h-8 w-8 p-1 text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -622,7 +639,7 @@ export default function SettingsPage() {
                     <h4 className="font-medium text-gray-900 mb-3">Family Members</h4>
                     <div className="space-y-2">
                       {user.family?.members?.map((member: any) => (
-                        <div key={member.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                        <div key={member.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded border gap-2">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
                               <User className="h-4 w-4 text-primary-600" />
@@ -633,7 +650,7 @@ export default function SettingsPage() {
                             </div>
                           </div>
                           {member.id === user.id && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">You</span>
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded self-start sm:self-auto">You</span>
                           )}
                         </div>
                       ))}
@@ -641,7 +658,9 @@ export default function SettingsPage() {
                   </div>
                   
                   {/* Edit History */}
-                  <EditHistoryComponent familyId={user.family_id} />
+                  <div className="mt-4">
+                    <EditHistoryComponent familyId={user.family_id} />
+                  </div>
                   
                   <Button 
                     onClick={handleLeaveFamily} 
@@ -826,7 +845,7 @@ export default function SettingsPage() {
                           ...preferences,
                           notifications: { ...preferences.notifications, email: e.target.checked }
                         })}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
                       />
                       <span className="text-sm">Notifikasi email</span>
                     </label>
@@ -838,7 +857,7 @@ export default function SettingsPage() {
                           ...preferences,
                           notifications: { ...preferences.notifications, push: e.target.checked }
                         })}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
                       />
                       <span className="text-sm">Notifikasi push</span>
                     </label>
@@ -848,7 +867,7 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <h4 className="font-medium">Notifikasi Laporan</h4>
                   <div className="space-y-3">
-                    <label className="flex items-center space-x-3">
+                    <label className="flex items-start space-x-3">
                       <input
                         type="checkbox"
                         checked={preferences.notifications.weekly_report}
@@ -856,11 +875,11 @@ export default function SettingsPage() {
                           ...preferences,
                           notifications: { ...preferences.notifications, weekly_report: e.target.checked }
                         })}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-5 w-5 mt-0.5"
                       />
                       <span className="text-sm">Weekly financial reports</span>
                     </label>
-                    <label className="flex items-center space-x-3">
+                    <label className="flex items-start space-x-3">
                       <input
                         type="checkbox"
                         checked={preferences.notifications.monthly_report}
@@ -868,9 +887,33 @@ export default function SettingsPage() {
                           ...preferences,
                           notifications: { ...preferences.notifications, monthly_report: e.target.checked }
                         })}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-5 w-5 mt-0.5"
                       />
                       <span className="text-sm">Laporan keuangan bulanan</span>
+                    </label>
+                    <label className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={preferences.notifications.low_balance_alert}
+                        onChange={(e) => setPreferences({
+                          ...preferences,
+                          notifications: { ...preferences.notifications, low_balance_alert: e.target.checked }
+                        })}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-5 w-5 mt-0.5"
+                      />
+                      <span className="text-sm">Low balance alerts</span>
+                    </label>
+                    <label className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={preferences.notifications.debt_reminders}
+                        onChange={(e) => setPreferences({
+                          ...preferences,
+                          notifications: { ...preferences.notifications, debt_reminders: e.target.checked }
+                        })}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-5 w-5 mt-0.5"
+                      />
+                      <span className="text-sm">Debt payment reminders</span>
                     </label>
                   </div>
                 </div>
