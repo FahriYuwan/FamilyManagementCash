@@ -64,24 +64,34 @@ export default function BusinessOrdersPage() {
     }
   }
 
+  // Function to generate order number
+  const generateOrderNumber = () => {
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `PSN-${year}${month}${day}-${random}`;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       const service = new BusinessService()
       
+      // Auto-generate order number if not editing
+      const orderData = {
+        ...formData,
+        quantity: parseInt(formData.quantity),
+        unit_price: parseFloat(formData.unit_price),
+        order_number: editingOrder ? formData.order_number : generateOrderNumber()
+      }
+      
       if (editingOrder) {
-        await service.updateOrder(editingOrder.id, {
-          ...formData,
-          quantity: parseInt(formData.quantity),
-          unit_price: parseFloat(formData.unit_price)
-        })
+        await service.updateOrder(editingOrder.id, orderData)
         setEditingOrder(null)
       } else {
-        await service.createOrder(user!.id, {
-          ...formData,
-          quantity: parseInt(formData.quantity),
-          unit_price: parseFloat(formData.unit_price)
-        })
+        await service.createOrder(user!.id, orderData)
       }
       
       setShowForm(false)
@@ -221,12 +231,15 @@ export default function BusinessOrdersPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Pesanan</label>
                   <Input
-                    value={formData.order_number}
+                    value={formData.order_number || (editingOrder ? '' : generateOrderNumber())}
                     onChange={(e) => setFormData({ ...formData, order_number: e.target.value })}
-                    placeholder="PSN-001"
+                    placeholder="Akan di-generate otomatis"
                     className="text-base p-3"
-                    required
+                    readOnly={!editingOrder}
                   />
+                  {!editingOrder && (
+                    <p className="text-xs text-gray-500 mt-1">Nomor pesanan akan di-generate otomatis</p>
+                  )}
                 </div>
 
                 <div>
@@ -241,7 +254,7 @@ export default function BusinessOrdersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Kontak</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Kontak (Opsional)</label>
                   <Input
                     value={formData.customer_contact}
                     onChange={(e) => setFormData({ ...formData, customer_contact: e.target.value })}
@@ -312,7 +325,7 @@ export default function BusinessOrdersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Batas Waktu</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Batas Waktu (Opsional)</label>
                   <Input
                     type="date"
                     value={formData.deadline_date}
@@ -322,7 +335,7 @@ export default function BusinessOrdersPage() {
                 </div>
 
                 <div className="sm:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Catatan (Opsional)</label>
                   <Input
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}

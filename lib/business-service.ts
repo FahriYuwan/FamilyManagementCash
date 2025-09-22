@@ -41,9 +41,12 @@ export class BusinessService {
   }
 
   async createOrder(userId: string, data: CreateOrderData) {
+    // Remove total_income from the data since it's a generated column
+    const { total_income, ...orderData } = data as any;
+    
     const { data: result, error } = await this.supabase
       .from('orders')
-      .insert({ ...data, user_id: userId, total_income: data.quantity * data.unit_price })
+      .insert({ ...orderData, user_id: userId })
       .select()
       .single()
     if (error) throw error
